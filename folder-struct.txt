@@ -1,0 +1,109 @@
+five-in-a-row-online/
+│
+├── client/
+│   ├── __init__.py
+│   ├── ui/
+│   │   ├── __init__.py
+│   │   ├── game_ui.py         # Giao diện trò chơi
+│   │   ├── login_ui.py        # Giao diện đăng nhập
+│   │   └── widgets.py         # Các widget tái sử dụng
+│   │
+│   ├── logic/
+│   │   ├── __init__.py
+│   │   ├── board.py           # Logic bàn cờ
+│   │   ├── game.py            # Quản lý trò chơi
+│   │   └── ai.py              # Logic AI cho single player
+│   │
+│   ├── network/
+│   │   ├── __init__.py
+│   │   └── client_network.py  # Xử lý kết nối với server
+│   │
+│   └── main.py                # Entry point cho client
+│
+├── server/
+│   ├── __init__.py
+│   ├── server.py              # Server chính
+│   ├── game_manager.py        # Quản lý các trận đấu
+│   ├── player.py              # Quản lý thông tin người chơi
+│   └── utils/
+│       ├── __init__.py
+│       └── logging.py         # Xử lý ghi log
+│
+├── common/
+│   ├── __init__.py
+│   ├── constants.py           # Các hằng số dùng chung
+│   ├── protocol.py            # Định nghĩa giao thức giao tiếp
+│   └── utils.py               # Các hàm tiện ích dùng chung
+│
+├── tests/
+│   ├── test_game_logic.py
+│   └── test_network.py
+│
+├── resources/
+│   ├── images/                # Hình ảnh (nếu có)
+│   ├── sounds/                # Âm thanh (nếu có)
+│   └── styles/                # Style files (nếu có)
+│
+├── docs/
+│   ├── README.md              # Tài liệu chính
+│   └── protocol.md            # Mô tả giao thức kết nối
+│
+├── requirements.txt           # Các thư viện cần thiết
+├── setup.py                   # Cài đặt gói
+└── .gitignore                 # File gitignore
+
+Dựa trên cấu trúc folder của project five-in-a-row-online, tôi sẽ đề xuất các class chính cần tạo:
+
+## Client Side
+
+### 1. UI Classes
+- **`GameUI`** - Giao diện chính của trò chơi
+- **`LoginUI`** - Giao diện đăng nhập
+- **`GameBoard`** - Widget hiển thị bàn cờ
+- **`PlayerInfo`** - Widget hiển thị thông tin người chơi
+- **`ChatWidget`** - Widget chat (nếu có)
+
+### 2. Logic Classes
+- **`Board`** - Quản lý trạng thái bàn cờ
+- **`Game`** - Logic trò chơi chính
+- **`GameState`** - Enum cho các trạng thái game
+- **`Move`** - Đại diện cho một nước đi
+- **`AIPlayer`** - Logic AI cho single player
+
+### 3. Network Classes
+- **`ClientNetwork`** - Xử lý kết nối với server
+- **`MessageHandler`** - Xử lý các message từ server
+
+## Server Side
+
+### 1. Core Classes
+- **`Server`** - Server chính
+- **`GameManager`** - Quản lý các trận đấu
+- **`Player`** - Thông tin người chơi
+- **`Room`** - Phòng chơi
+- **`GameSession`** - Một phiên chơi cụ thể
+
+### 2. Utility Classes
+- **`Logger`** - Xử lý ghi log
+- **`DatabaseManager`** - Quản lý database (nếu có)
+
+## Common Classes
+
+### 1. Protocol Classes
+- **`Message`** - Base class cho các message
+- **`LoginMessage`** - Message đăng nhập
+- **`MoveMessage`** - Message nước đi
+- **`GameStateMessage`** - Message trạng thái game
+- **`ChatMessage`** - Message chat
+
+### 2. Data Classes
+- **`Position`** - Vị trí trên bàn cờ
+- **`PlayerType`** - Enum loại người chơi
+- **`GameResult`** - Kết quả trò chơi
+
+### 3. Exception Classes
+- **`GameException`** - Exception chung cho game
+- **`NetworkException`** - Exception mạng
+- **`InvalidMoveException`** - Exception nước đi không hợp lệ
+
+Bạn muốn tôi tạo code skeleton cho những class nào trước?
