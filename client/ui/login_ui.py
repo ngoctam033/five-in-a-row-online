@@ -49,5 +49,4 @@ class LoginUI:
         ttk.Button(self.login_frame, text="Tìm trận", style='Accent.TButton', command=self.connect_to_server).pack(pady=20, ipady=5, ipadx=10)
     
     def run(self):
-        """Run the demo application"""
         self.mainloop()
