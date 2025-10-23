@@ -1,22 +1,26 @@
 import tkinter as tk
 from tkinter import ttk
 
-class LoginUI:
-    def show_login_ui(self):
-        self.clear_main_frame()
-        self.login_frame = ttk.Frame(self.main_frame)
-        self.login_frame.pack(expand=True)
+class LoginUI(ttk.Frame):
+    def __init__(self, parent, on_connect):
+        super().__init__(parent)
+        self.on_connect = on_connect
 
-        ttk.Label(self.login_frame, text="Kết nối Server", font=("Arial", 18, "bold")).pack(pady=10)
+        ttk.Label(self, text="Nhập tên người chơi: ").pack(pady=5)
+        self.username_entry = ttk.Entry(self)
+        self.username_entry.pack(pady=5)
 
-        ttk.Label(self.login_frame, text="Tên người chơi", font=("Arial", 12)).pack(pady(10,0))
-        self.name_entry = ttk.Entry(self.login_frame, font=("Arial", 12), width=30)
-        self.name_entry.pack(pady=5, padx=20)
+        ttk.Label(self, text="Nhập IP Server:").pack(pady=5)
+        self.ip_entry = ttk.Entry(self)
+        self.ip_entry.pack(pady=5)
 
-        ttk.Label(self.login_frame, text="Địa chỉ IP của server", font=("Arial", 12)).pack(pady=(10,0))
-        self.ip_entry = ttk.Entry(self.login_frame, font=("Arial", 12), width=30)
-        self.ip_entry.insert()
-        self.ip_entry.pack(pady=5, padx=20)
-
-        ttk.Button(self.login_frame, text="Tìm trận", style='Accent.TButton', command=self.connect_to_server).pack(pady=20, ipady=5, ipadx=10)
+        ttk.Button(self, text="Kết nối", command=self._on_connect_pressed).pack(pady=10)
+    def _on_connect_pressed(self): 
+        username = self.username_entry.get().strip()
+        ip = self.ip_entry.get().strip()
+        if not username or not ip:
+            messagebox.showwarning("Thiếu thông tin", "Vui lòng nhập tên và IP server")
+            return
+        # Gọi callback cho UI chính (GameUI)
+        self.on_connect(username, ip)
 
