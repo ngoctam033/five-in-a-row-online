@@ -24,7 +24,19 @@ class GameUI:
         self.main_frame.pack(fill=tk.BOTH, expand=True)
         self.create_mode_selection_ui()
 
-#     def create_mode_selection_ui(self): ...
+    def create_mode_selection_ui(self):
+        self.clear_main_frame()
+        self.mode_selection_frame = ttk.Frame(self.main_frame)
+        self.mode_selection_frame.pack(expand=True)
+
+        ttk.Label(self.mode_selection_frame, text="CHỌN CHẾ ĐỘ CHƠI", font=("Arial", 24, "bold")).pack(pady=20)
+        ttk.Button(self.mode_selection_frame, text="Chơi Online", style='Accent.TButton', command=self.show_login_ui).pack(pady=10, ipady=5, ipadx=10)
+        ttk.Button(self.mode_selection_frame, text="Chơi Offline (Với Máy)", command=self.start_offline_game).pack(pady=10, ipady=5, ipadx=10)
+        
+        # Cấu hình style cho nút nhấn
+        s = ttk.Style()
+        s.configure('Accent.TButton', font=('Arial', 14), background='#3498DB', foreground='white')
+        s.map('Accent.TButton', background=[('active', '#2980B9')])
 #     def show_login_ui(self): ...
 #     def start_offline_game(self): ...
 #     def show_waiting_screen(self): ...
