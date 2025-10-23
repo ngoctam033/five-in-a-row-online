@@ -1,33 +1,41 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-class GameScreen:
-    def setup_game_view(self):
-        self.clear_main_frame()
+class GameUI:
+    def __init__(self, root, game: Game, network: ClientNetwork):
+        self.root = root
+        self.root.title("Five in a Row")
+        self.root.configure(bg="#F0F0F0") # Màu nền cho cửa sổ
+        # Sử dụng theme 'clam' để có giao diện hiện đại hơn
+        style = ttk.Style()
+        style.theme_use('clam')
+        # Khởi tạo logic game và mạng
+        self.game = Game()
+        self.network = NetworkManager(queue.Queue())
+        self.message_queue = self.network.message_queue
+        # Trạng thái game
+        self.my_turn = False
+        self.my_piece_id = 0
+        self.username = ""
+        self.game_started = False
+        self.timer_id = None
+        # Frame chính
+        self.main_frame = ttk.Frame(root)
+        self.main_frame.pack(fill=tk.BOTH, expand=True)
+        self.create_mode_selection_ui()
 
-        #frame chua thong tin va ban co
-        game_container = ttk.Frame(self.main_frame)
-        game_container.pack(expand=True, fill=tk.BOTH, padx=10, pady=10)
-
-        #thanh trang thai o tren
-        self.status_bar = ttk.Label(game_container, text='...', font=("Arial", 14, "italic"), anchor=tk.CENTER)
-        self.status_bar.pack(pady=(0,10), fill=tk.X)
-
-        #tich hop giao dien ban co
-        self.gameboard = GameBoardUI(game_container, size=25, cell_size=28)
-        self.gameboard.move_callback = self.on_board_click
-
-    def start_timer(self, remaining_time):
-        self.stop_timer()
-        self.remaining_time = remaining_time
-        self.update_timer()
-
-    # def update_timer():
-
-    # def stop_timer():
-
-    # def handle_game_result():
-
-    # def handle_game_result_offline():
-
-    # def show_play_again_dialog():
+#     def create_mode_selection_ui(self): ...
+#     def show_login_ui(self): ...
+#     def start_offline_game(self): ...
+#     def show_waiting_screen(self): ...
+#     def setup_game_view(self): ...
+#     def on_board_click(self, row, col): ...
+#     def start_timer(self, remaining_time): ...
+#     def update_timer(self): ...
+#     def stop_timer(self): ...
+#     def handle_game_result(self, text): ...
+#     def handle_game_result_offline(self, winner): ...
+#     def show_play_again_dialog(self, message): ...
+#     def clear_main_frame(self): ...
+#     # and helper methods to receive network events:
+#     def handle_network_event(self, event_type, payload): ...
