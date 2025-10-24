@@ -37,7 +37,21 @@ class GameUI:
         s = ttk.Style()
         s.configure('Accent.TButton', font=('Arial', 14), background='#3498DB', foreground='white')
         s.map('Accent.TButton', background=[('active', '#2980B9')])
-#     def show_login_ui(self): ...
+    def show_login_ui(self):
+        self.clear_main_frame()
+        self.login_frame = ttk.Frame(self.main_frame)
+        self.login_frame.pack(expand=True)
+
+        ttk.Label(self.login_frame, text="KẾT NỐI SERVER", font=("Arial", 18, "bold")).pack(pady=10)
+
+        ttk.Label(self.login_frame, text="Tên người chơi:", font=("Arial", 12)).pack(pady=(10,0))
+        self.name_entry = ttk.Entry(self.login_frame, font=("Arial", 12), width=30)
+        self.name_entry.pack(pady=5, padx=20)
+
+        ttk.Label(self.login_frame, text="Địa chỉ IP của Server:", font=("Arial", 12)).pack(pady=(10,0))
+        self.ip_entry = ttk.Entry(self.login_frame, font=("Arial", 12), width=30)
+        self.ip_entry.insert(0, "127.0.0.1")
+        self.ip_entry.pack(pady=5, padx=20)
 #     def start_offline_game(self): ...
 #     def show_waiting_screen(self): ...
 #     def setup_game_view(self): ...
