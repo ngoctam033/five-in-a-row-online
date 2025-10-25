@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 class GameUI:
-    def __init__(self, root, game: Game, network: ClientNetwork):
+    def __init__(self, root):
         self.root = root
         self.root.title("Five in a Row")
         self.root.configure(bg="#F0F0F0") # Màu nền cho cửa sổ
@@ -37,6 +37,7 @@ class GameUI:
         s = ttk.Style()
         s.configure('Accent.TButton', font=('Arial', 14), background='#3498DB', foreground='white')
         s.map('Accent.TButton', background=[('active', '#2980B9')])
+
     def show_login_ui(self):
         self.clear_main_frame()
         self.login_frame = ttk.Frame(self.main_frame)
@@ -52,9 +53,26 @@ class GameUI:
         self.ip_entry = ttk.Entry(self.login_frame, font=("Arial", 12), width=30)
         self.ip_entry.insert(0, "127.0.0.1")
         self.ip_entry.pack(pady=5, padx=20)
-#     def start_offline_game(self): ...
+
+    def start_offline_game(self):
+        self.root.title("Five in a Row - Chơi với máy")
+        self.setup_game_view()
+        self.status_bar.config(text="Chế độ Offline: Bạn đi trước (Quân Đen).")
+
 #     def show_waiting_screen(self): ...
-#     def setup_game_view(self): ...
+    def setup_game_view(self):
+        self.clear_main_frame()
+        # Frame chứa thông tin và bàn cờ
+        game_container = ttk.Frame(self.main_frame)
+        game_container.pack(expand=True, fill=tk.BOTH, padx=10, pady=10)
+        
+        # Thanh trạng thái ở trên
+        self.status_bar = ttk.Label(game_container, text="...", font=("Arial", 14, "italic"), anchor=tk.CENTER)
+        self.status_bar.pack(pady=(0, 10), fill=tk.X)
+        
+        # Tích hợp giao diện bàn cờ mới
+        self.game_board = GameBoardUI(game_container, size=25, cell_size=28)
+        self.game_board.move_callback = self.on_board_click
 #     def on_board_click(self, row, col): ...
 #     def start_timer(self, remaining_time): ...
 #     def update_timer(self): ...
