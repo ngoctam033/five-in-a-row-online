@@ -24,6 +24,8 @@ class GameUI:
         self.main_frame.pack(fill=tk.BOTH, expand=True)
         self.create_mode_selection_ui()
 
+
+    # ----- chọn chế độ -------
     def create_mode_selection_ui(self):
         self.clear_main_frame()
         self.mode_selection_frame = ttk.Frame(self.main_frame)
@@ -38,6 +40,8 @@ class GameUI:
         s.configure('Accent.TButton', font=('Arial', 14), background='#3498DB', foreground='white')
         s.map('Accent.TButton', background=[('active', '#2980B9')])
 
+
+    # ------ kết nối -------
     def show_login_ui(self):
         self.clear_main_frame()
         self.login_frame = ttk.Frame(self.main_frame)
@@ -54,12 +58,18 @@ class GameUI:
         self.ip_entry.insert(0, "127.0.0.1")
         self.ip_entry.pack(pady=5, padx=20)
 
+    # def connect_to_server(self):
+
+    # ------ Chế độ offline ------
     def start_offline_game(self):
         self.root.title("Five in a Row - Chơi với máy")
         self.setup_game_view()
         self.status_bar.config(text="Chế độ Offline: Bạn đi trước (Quân Đen).")
-
+    
+    # ------- Màn chờ --------
 #     def show_waiting_screen(self): ...
+
+    # ----- giao diện chính -------
     def setup_game_view(self):
         self.clear_main_frame()
         # Frame chứa thông tin và bàn cờ
@@ -73,13 +83,75 @@ class GameUI:
         # Tích hợp giao diện bàn cờ mới
         self.game_board = GameBoardUI(game_container, size=25, cell_size=28)
         self.game_board.move_callback = self.on_board_click
-#     def on_board_click(self, row, col): ...
+
+    # ------ xử lý nước đi -------
+    def on_board_click(self, row, col):
+        if self.game.board[row][col] != 0: return
+
+        if self.game_started: # online
+            if self.my_turn: 
+                self.network.send_message(f"MOVE|{col},{row}")
+                self.game.make_move(row, col, self.my_piece_id)
+                # kiem tra thang
+                winner, line = self.game.check_win_and_get_line(row, col)
+                if winner: 
+                    self.game_board.draw_winning_line(line[0], line[1])
+                    self.handle_game_result("Bạn đã chiến thắng!")
+                    return
+                self.my_turn = False
+                self.stop_timer()
+                self.status_bar.config(text="Đang chờ đối thủ...")
+            else: 
+                self.handle_click_offline(row, col)
+
+    def handle_click_offline(self, row, col):
+        self.game.make_move(row, col, 1)
+        self.game_board.place_piece(row, col, 1)
+        winner, line = self.game.check_win_and_get_line(row, col)
+        if winner: 
+            self.game_board.draw_winning_line(line[0], line[1])
+            self.handle_game_result_offline(winner)
+            return
+        
+        self.status_bar.config(text="Máy đang suy nghĩ...")
+        self.root.after(500, self.execute_ai_turn)
+
+    def execute_ai_turn(self):
+        ai_row, ai_col = self.game.best_move(self.game.board)
+        self.game.make_move(ai_row, ai_col, 2)
+        self.game_board.place_piece(ai_row, ai_col, 2)
+        winner, line = self.game.check_win_and_get_line(ai_row, ai_col)
+        if winner:
+            self.game_board.draw_winning_line(line[0], line[1])
+            self.handle_game_result_offline(winner)
+        else:
+            self.status_bar.config(text="Tới lượt bạn.")
+
+    # ------ xử lý message từ server -------
+    # def process_messages(self):
+    
+    # ------- timer -------
 #     def start_timer(self, remaining_time): ...
 #     def update_timer(self): ...
 #     def stop_timer(self): ...
-#     def handle_game_result(self, text): ...
+
+    # ------ Kết thúc -------
+    def handle_game_result(self, text):
+        self.my_turn = False
+        self.game_started = False
+        self.stop_timer()
+        messagebox.showinfo("Kết thúc", text)
+        if messagebox.askyesno("Chơi lại?", "Bạn có muốn chơi lại không?"):
+            self.game.reset_board()
+            self.game_board.reset()
+            self.status_bar.config(text="Chờ bắt đầu lại...")
+            self.show_waiting_screen()
+        else:
+            self.create_mode_selection_ui()
 #     def handle_game_result_offline(self, winner): ...
-#     def show_play_again_dialog(self, message): ...
 #     def clear_main_frame(self): ...
+
+
+#     def show_play_again_dialog(self, message): ...
 #     # and helper methods to receive network events:
 #     def handle_network_event(self, event_type, payload): ...
