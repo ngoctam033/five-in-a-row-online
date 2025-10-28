@@ -58,7 +58,20 @@ class GameUI:
         self.ip_entry.insert(0, "127.0.0.1")
         self.ip_entry.pack(pady=5, padx=20)
 
-    # def connect_to_server(self):
+    def connect_to_server(self):
+        self.username = self.name_entry.get().strip()
+        ip = self.ip_entry.get().strip()
+        if not self.username or not ip:
+            messagebox.showerror("Lỗi", "Vui lòng nhập tên và địa chỉ IP.")
+            return
+        
+        if self.network.connect(ip, 13000):
+            self.network.send_message(f"LOGIN|{self.username}")
+            self.root.after(100, self.process_messages)
+            self.show_waiting_screen()
+        else:
+            messagebox.showerror("Lỗi kết nối", f"Không thể kết nối đến {ip}:13000.")
+
 
     # ------ Chế độ offline ------
     def start_offline_game(self):
