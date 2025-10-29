@@ -1,112 +1,80 @@
-"""
-Modern Game Board UI - Giao diện bàn cờ hiện đại
-Improved Five-in-a-Row game board interface
-"""
+# S - Single Responsibility: Tách riêng từng trách nhiệm
+import logging
 
-import tkinter as tk
-from tkinter import ttk, messagebox
-import math
+logging.basicConfig(level=logging.INFO)
 
-class GameBoardUI:
-    """Modern game board interface with improved graphics"""
-    
-    def __init__(self, parent, size=15, cell_size=30):
-        self.parent = parent
+class Board:
+    """Quản lý trạng thái bàn cờ và logic liên quan"""
+    def __init__(self, size=25):
         self.size = size
-        self.cell_size = cell_size
-        self.margin = 40
-        
-        # Colors
-        self.board_color = "#FFFFFF"  # White
-        self.line_color = "#8B4513"   # SaddleBrown
-        self.player1_color = "#000000"  # Black
-        self.player2_color = "#FFFFFF"  # White
-        self.highlight_color = "#FFD700"  # Gold
-        self.last_move_color = "#FF6B6B"  # Light red
-        
-        # Game state
-        self.board = [[0 for _ in range(size)] for _ in range(size)]
-        self.last_move = None
-        self.current_player = 1
-        self.game_enabled = True
-        self.move_callback = None
-        
-        self.setup_ui()
-    
-    def setup_ui(self):
-        """Setup the game board user interface"""
-        # Main frame
-        self.main_frame = ttk.Frame(self.parent)
-        self.main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-        
-        # Game info frame
-        self.info_frame = ttk.Frame(self.main_frame)
-        self.info_frame.pack(fill=tk.X, pady=(0, 10))
-        
-        # Canvas for game board
-        canvas_size = self.size * self.cell_size + 2 * self.margin
-        self.canvas = tk.Canvas(
-            self.main_frame,
-            width=canvas_size,
-            height=canvas_size,
-            bg=self.board_color,
-            highlightthickness=0,
-            highlightbackground="#8B4513"
-        )
-        self.canvas.pack(expand=True)
-        
-        # Draw initial board
-        self.draw_board()
-    
-    def draw_board(self):
-        """Draw the game board grid"""
-        self.canvas.delete("all")
-        
-        # Draw background
-        self.canvas.create_rectangle(
-            0, 0, 
-            self.size * self.cell_size + 2 * self.margin,
-            self.size * self.cell_size + 2 * self.margin,
-            fill=self.board_color,
-            outline=""
-        )
-        
-        # Draw grid lines
-        for i in range(self.size):
-            # Vertical lines
-            x = self.margin + i * self.cell_size
-            self.canvas.create_line(
-                x, self.margin,
-                x, self.margin + (self.size - 1) * self.cell_size,
-                fill=self.line_color,
-                width=1
-            )
-            
-            # Horizontal lines
-            y = self.margin + i * self.cell_size
-            self.canvas.create_line(
-                self.margin, y,
-                self.margin + (self.size - 1) * self.cell_size, y,
-                fill=self.line_color,
-                width=1
-            )
+        logging.info(f"Board initialized with size {self.size}")
+        self.reset()
 
-# Demo application
-class GameBoardDemo:
-    """Demo application to showcase the game board"""
-    
-    def __init__(self):
-        self.root = tk.Tk()
-        self.root.title("Five in a Row - Modern Game Board")
-        self.root.geometry("600x700")
-        
-        # Apply modern theme
-        style = ttk.Style()
-        style.theme_use('clam')
-        
-        # Create game board
-        self.game_board = GameBoardUI(self.root, size=20, cell_size=25)
-            
-    def run(self):
-        """Run the demo application"""
-        self.root.mainloop()
+    def reset(self):
+        self.grid = [[0 for _ in range(self.size)] for _ in range(self.size)]
+        logging.info("Board reset.")
+
+    def is_empty(self):
+        empty = all(cell == 0 for row in self.grid for cell in row)
+        logging.info(f"Board is_empty: {empty}")
+        return empty
+
+    def is_in(self, y, x):
+        in_board = 0 <= y < self.size and 0 <= x < self.size
+        # logging.info(f"Check is_in({y}, {x}): {in_board}")
+        return in_board
+
+    def get(self, y, x):
+        if self.is_in(y, x):
+            value = self.grid[y][x]
+            # logging.info(f"Get cell ({y}, {x}): {value}")
+            return value
+        else:
+            logging.info(f"Get cell ({y}, {x}): out of bounds")
+            return None
+
+    def set(self, y, x, value):
+        if self.is_in(y, x):
+            self.grid[y][x] = value
+            logging.info(f"Set cell ({y}, {x}) to {value}")
+        else:
+            logging.info(f"Set cell ({y}, {x}) failed: out of bounds")
+
+    def reset_cell(self, y, x):
+        if self.is_in(y, x):
+            self.grid[y][x] = 0
+            logging.info(f"Reset cell ({y}, {x}) to 0")
+        else:
+            logging.info(f"Reset cell ({y}, {x}) failed: out of bounds")
+
+class BoardRenderer:
+    """Chịu trách nhiệm vẽ bàn cờ lên canvas"""
+    def __init__(self, canvas, board, pixel=40):
+        self.canvas = canvas
+        self.board = board
+        self.pixel = pixel
+        logging.info(f"BoardRenderer initialized with pixel size {self.pixel}")
+
+    def draw_board(self):
+        self.canvas.delete("all")
+        logging.info("Drawing board...")
+        for i in range(self.board.size):
+            for j in range(self.board.size):
+                x, y = i * self.pixel, j * self.pixel
+                self.canvas.create_rectangle(x, y, x + self.pixel, y + self.pixel, outline="black", width=1)
+                piece = self.board.get(j, i)
+                if piece == 1:
+                    logging.info(f"Draw circle at ({j}, {i})")
+                    self.draw_circle(x + self.pixel // 2, y + self.pixel // 2, 18, "blue")
+                elif piece == 2:
+                    logging.info(f"Draw cross at ({j}, {i})")
+                    self.draw_cross(x + self.pixel // 2, y + self.pixel // 2, 18, "red")
+
+    def draw_circle(self, x, y, size, color):
+        logging.info(f"Drawing circle at pixel ({x}, {y}), size {size}, color {color}")
+        self.canvas.create_oval(x - size, y - size, x + size, y + size, outline="black", fill=color, width=3)
+
+    def draw_cross(self, x, y, size, color):
+        logging.info(f"Drawing cross at pixel ({x}, {y}), size {size}, color {color}")
+        self.canvas.create_line(x - size, y - size, x + size, y + size, fill=color, width=5)
+        self.canvas.create_line(x + size, y - size, x - size, y + size, fill=color, width=5)
