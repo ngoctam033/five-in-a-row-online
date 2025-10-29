@@ -13,7 +13,6 @@ class WebSocketClient:
 		self._receive_task = None
 		self.connected = False
 		# Khởi tạo và kết nối ngay khi tạo đối tượng
-		asyncio.run(self._init_ws())
 
 	async def _init_ws(self):
 		try:

@@ -4,11 +4,13 @@ from network.client_network import WebSocketClient
 import time
 import os
 from dotenv import load_dotenv
+import asyncio
 
-def main():
+async def main():
     load_dotenv()
     server_addr = os.getenv("server")
     ws_client = WebSocketClient(server_addr)
+    await ws_client._init_ws()
 
     # Đợi kết nối websocket hoàn thành
     timeout = 5
@@ -25,4 +27,4 @@ def main():
         print("Không thể kết nối đến server websocket. Ứng dụng sẽ không khởi động.")
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
