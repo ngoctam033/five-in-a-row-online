@@ -49,7 +49,7 @@ class ChessboardApp:
                 move_data = {"player": 1, "y": y, "x": x}
                 asyncio.run(self.ws_client.send_move(x, y, player=1))
                 logging.info("Sent move to server: %s", move_data)
-            self.root.after(500, self.player2_move)
+            # self.root.after(500, self.player2_move)
         else:
             logging.info("It's not Player 1's turn or invalid move at (%d, %d).", y, x)
 
