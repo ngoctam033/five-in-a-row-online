@@ -47,7 +47,7 @@ class ChessboardApp:
             # Gửi thông tin nước đi lên server qua websocket
             if self.ws_client and self.ws_client.connection:
                 move_data = {"player": 1, "y": y, "x": x}
-                asyncio.run(self.ws_client.send_move(x, y, player=1))
+                asyncio.create_task(self.ws_client.send_move(x, y, player=1))
                 logging.info("Sent move to server: %s", move_data)
             # self.root.after(500, self.player2_move)
         else:
