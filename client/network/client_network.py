@@ -63,18 +63,18 @@ class WebSocketClient:
 			logging.warning("No connection to receive message.")
 			return None
 	
-	def send_move(self, x, y, player=1):
+	def send_move(self, x, y, playername):
 		"""
         Gửi thông tin nước đi lên server.
         Args:
             x (int): Tọa độ cột
             y (int): Tọa độ hàng
-            player (int): Người chơi (mặc định 1)
+            player_name (str): Tên người chơi thực hiện nước đi
         """
 		if self.connection:
 			move_data = {
 						"type": "move",
-						"player": player,
+						"player": playername,
 						"x": x,
 						"y": y
 						}
