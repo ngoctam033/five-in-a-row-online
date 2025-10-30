@@ -24,7 +24,7 @@ class WebSocketServer:
 					if data.get("type") == "move":
 						response = "This is a response for move message"
 						# response = self.game_manager.handle_move_message(data)
-						return response
+						await websocket.send(json.dumps(response))
 				except json.JSONDecodeError:
 					logging.warning("Received non-JSON message:", message)
 		except websockets.ConnectionClosed:
