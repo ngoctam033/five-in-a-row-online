@@ -26,7 +26,7 @@ class WebSocketServer:
 						# response = self.game_manager.handle_move_message(data)
 						await websocket.send(json.dumps(response))
 				except json.JSONDecodeError:
-					logging.warning("Received non-JSON message:", message)
+					logging.warning("Received non-JSON message: %s", message)
 		except websockets.ConnectionClosed:
 			logging.info("Client disconnected")
 			# Xóa player khi client ngắt kết nối
