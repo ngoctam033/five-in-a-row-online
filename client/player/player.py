@@ -9,7 +9,7 @@ class Player:
 
     def make_move(self, board, y, x):
         if board.get(y, x) == 0:
-            logging.info(f"Player {self.piece_id} made a move at ({y}, {x}).")
+            # logging.info(f"Player {self.piece_id} made a move at ({y}, {x}).")
             board.set(y, x, self.piece_id)
             return True
         logging.info(f"Player {self.piece_id} failed to make a move at ({y}, {x}): Cell is already occupied.")  

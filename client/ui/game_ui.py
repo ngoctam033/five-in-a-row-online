@@ -4,6 +4,8 @@ from ui.board import Board
 from ui import BoardRenderer
 from player.player import Player, OnlinePlayer
 import asyncio
+from network.client_network import WebSocketClient
+
 
 # from player.aiplayer import AIPlayer
 import logging
@@ -12,7 +14,7 @@ logging.basicConfig(level=logging.INFO)
 
 class ChessboardApp:
     """Quản lý giao diện và luồng chính của ứng dụng"""
-    def __init__(self, root, mode="pvp", ws_client=None):
+    def __init__(self, root, mode: str = "pvp", ws_client: WebSocketClient = None):
         self.root = root
         self.root.title("Five in a Row")
         self.root.geometry("1000x1000")
@@ -45,10 +47,8 @@ class ChessboardApp:
             self.renderer.draw_board()
             logging.info("Player 1 made a move at (%d, %d).", y, x)
             # Gửi thông tin nước đi lên server qua websocket
-            if self.ws_client and self.ws_client.connection:
-                move_data = {"player": 1, "y": y, "x": x}
-                asyncio.create_task(self.ws_client.send_move(x, y, player=1))
-                logging.info("Sent move to server: %s", move_data)
+            if self.ws_client:
+                self.ws_client.send_move(x, y, player=1)
             # self.root.after(500, self.player2_move)
         else:
             logging.info("It's not Player 1's turn or invalid move at (%d, %d).", y, x)

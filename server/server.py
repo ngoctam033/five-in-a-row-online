@@ -14,11 +14,13 @@ class WebSocketServer:
 			async for message in websocket:
 				print(f"Received: {message}")
 				await websocket.send(f"Echo: {message}")
-				# Xử lý thông điệp từ client
-				data = json.loads(message)
-				if data.get("type") == "move":
-					response = self.game_manager.handle_move_message(data)
-				
+				try:
+					data = json.loads(message)
+					if data.get("type") == "move":
+						response = self.game_manager.handle_move_message(data)
+						return response
+				except json.JSONDecodeError:
+					print("Received non-JSON message:", message)
 		except websockets.ConnectionClosed:
 			print("Client disconnected")
 

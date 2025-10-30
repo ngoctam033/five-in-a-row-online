@@ -5,12 +5,13 @@ import time
 import os
 from dotenv import load_dotenv
 import asyncio
+import threading
 
-async def main():
+def main():
     load_dotenv()
     server_addr = os.getenv("server")
     ws_client = WebSocketClient(server_addr)
-    await ws_client._init_ws()
+    ws_client._init_ws()
 
     # Đợi kết nối websocket hoàn thành
     timeout = 5
@@ -19,12 +20,14 @@ async def main():
         time.sleep(0.1)
         waited += 0.1
 
-    if ws_client.connected and ws_client.connection is not None:
-        root = tk.Tk()
-        app = ChessboardApp(root, ws_client=ws_client)
-        root.mainloop()
-    else:
-        print("Không thể kết nối đến server websocket. Ứng dụng sẽ không khởi động.")
+    # if ws_client.connected and ws_client.connection is not None:
+    root = tk.Tk()
+    app = ChessboardApp(root, ws_client=ws_client)
+    root.mainloop()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # loop = asyncio.new_event_loop()
+    # asyncio.set_event_loop(loop)
+    # threading.Thread(target=loop.run_forever, daemon=True).start()
+    # Chạy main coroutine để khởi tạo websocket client
+    main()

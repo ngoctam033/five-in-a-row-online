@@ -1,5 +1,5 @@
 import asyncio
-import websockets
+import websocket
 import logging
 import asyncio
 import threading
@@ -14,23 +14,19 @@ class WebSocketClient:
 		self.connected = False
 		# Khởi tạo và kết nối ngay khi tạo đối tượng
 
-	async def _init_ws(self):
+	def _init_ws(self):
 		try:
 			logging.info(f"Connecting to server at {self.uri}...")
-			self.connection = await websockets.connect(self.uri)
+			self.connection = websocket.create_connection(self.uri)
 			if self.connection:
 				self.connected = True
 				logging.info("Connected to server.")
-				sent_success = await self.send("Hello from client!")
+				sent_success = self.send("Hello from client!")
 				if sent_success:
 					logging.info("Initial hello message sent successfully.")
 					# nhận lại phản hồi từ server
-					response = await self.receive_once()
+					response = self.receive_once()
 					print("Server response:", response)
-					# Bắt đầu luồng nhận tin nhắn nếu có callback
-					if self.on_message:
-						loop = asyncio.get_event_loop()
-						self._receive_task = loop.create_task(self._receive_loop())
 				else:
 					logging.warning("Failed to send initial hello message.")
 			else:
@@ -38,11 +34,12 @@ class WebSocketClient:
 		except Exception as e:
 			print(f"Failed to connect to server: {e}")
 			
-	async def send(self, message):
+	def send(self, message):
 		"""Gửi message từ client đến server, trả về True nếu gửi thành công, False nếu lỗi hoặc không có kết nối"""
 		if self.connection:
 			try:
-				await self.connection.send(message)
+				# await self.connection.send(message)
+				self.connection.send(message)
 				logging.info(f"Sent message: {message}")
 				return True
 			except Exception as e:
@@ -52,11 +49,11 @@ class WebSocketClient:
 			logging.warning("No connection to send message.")
 			return False
 
-	async def receive_once(self):
+	def receive_once(self):
 		"""Nhận một tin nhắn từ server (dùng khi không có callback)"""
 		if self.connection:
 			try:
-				response = await self.connection.recv()
+				response = self.connection.recv()
 				logging.info(f"Received message: {response}")
 				return response
 			except Exception as e:
@@ -66,7 +63,7 @@ class WebSocketClient:
 			logging.warning("No connection to receive message.")
 			return None
 	
-	async def send_move(self, x, y, player=1):
+	def send_move(self, x, y, player=1):
 		"""
         Gửi thông tin nước đi lên server.
         Args:
@@ -82,10 +79,12 @@ class WebSocketClient:
 						"y": y
 						}
 			message = json.dumps(move_data)
-			await self.send(message)
-			response = await self.receive_once()
+			sended = self.send(message)
+			if not sended:
+				logging.warning("Failed to send move data.")
+				return
+			response = self.receive_once()
 			if response:
 				print("Server response:", response)
-			logging.info(f"Sent move to server: {move_data}")
 		else:
 			logging.warning("No connection to send move.")
