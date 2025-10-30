@@ -4,6 +4,7 @@ class Player:
         self.player_id = player_id      # Mã định danh người chơi (có thể là số hoặc chuỗi)
         self.name = name                # Tên người chơi
         self.piece_id = piece_id        # Loại quân cờ (1 hoặc 2)
+        self.user_name = user_name      # Tên người dùng (do user nhập)
         self.score = 0                  # Điểm số (nếu có)
 
     def to_dict(self):
@@ -12,8 +13,9 @@ class Player:
             "player_id": self.player_id,
             "name": self.name,
             "piece_id": self.piece_id,
+            "user_name": self.user_name,
             "score": self.score
         }
 
     def __repr__(self):
-        return f"Player({self.player_id}, {self.name}, piece={self.piece_id}, score={self.score})"
+        return f"Player({self.player_id}, {self.name}, user={self.user_name}, piece={self.piece_id}, score={self.score})"
