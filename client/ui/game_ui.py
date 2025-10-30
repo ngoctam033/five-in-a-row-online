@@ -48,7 +48,7 @@ class ChessboardApp:
             logging.info("Player 1 made a move at (%d, %d).", y, x)
             # Gửi thông tin nước đi lên server qua websocket
             if self.ws_client:
-                self.ws_client.send_move(x, y, player=1)
+                self.ws_client.send_move(x, y, playername="Player1")
             # self.root.after(500, self.player2_move)
         else:
             logging.info("It's not Player 1's turn or invalid move at (%d, %d).", y, x)

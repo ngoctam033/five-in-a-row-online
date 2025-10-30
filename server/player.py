@@ -1,6 +1,6 @@
 class Player:
     """Lưu trữ thông tin người chơi cờ caro"""
-    def __init__(self, player_id, name, piece_id, is_online=True):
+    def __init__(self, player_id, name, piece_id):
         self.player_id = player_id      # Mã định danh người chơi (có thể là số hoặc chuỗi)
         self.name = name                # Tên người chơi
         self.piece_id = piece_id        # Loại quân cờ (1 hoặc 2)
@@ -12,9 +12,8 @@ class Player:
             "player_id": self.player_id,
             "name": self.name,
             "piece_id": self.piece_id,
-            "is_online": self.is_online,
             "score": self.score
         }
 
     def __repr__(self):
-        return f"Player({self.player_id}, {self.name}, piece={self.piece_id}, online={self.is_online}, score={self.score})"
+        return f"Player({self.player_id}, {self.name}, piece={self.piece_id}, score={self.score})"

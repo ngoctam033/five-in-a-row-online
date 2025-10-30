@@ -4,8 +4,6 @@ from network.client_network import WebSocketClient
 import time
 import os
 from dotenv import load_dotenv
-import asyncio
-import threading
 
 def main():
     load_dotenv()
@@ -26,8 +24,4 @@ def main():
     root.mainloop()
 
 if __name__ == "__main__":
-    # loop = asyncio.new_event_loop()
-    # asyncio.set_event_loop(loop)
-    # threading.Thread(target=loop.run_forever, daemon=True).start()
-    # Chạy main coroutine để khởi tạo websocket client
     main()
