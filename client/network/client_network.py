@@ -25,8 +25,8 @@ class WebSocketClient:
 				if sent_success:
 					logging.info("Initial hello message sent successfully.")
 					# nhận lại phản hồi từ server
-					response = self.receive_once()
-					print("Server response:", response)
+					# response = self.receive_once()
+					# print("Server response:", response)
 				else:
 					logging.warning("Failed to send initial hello message.")
 			else:
