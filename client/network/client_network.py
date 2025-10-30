@@ -67,26 +67,40 @@ class WebSocketClient:
 			logging.warning("No connection to receive message.")
 			return None
 	
-	async def send_move(self, x, y, player=1):
+	async def send_move(self, x, y, player_name):
 		"""
         Gửi thông tin nước đi lên server.
         Args:
             x (int): Tọa độ cột
             y (int): Tọa độ hàng
-            player (int): Người chơi (mặc định 1)
+            player_name (str): Tên người chơi thực hiện nước đi
         """
-		if self.connection:
-			move_data = {
-						"type": "move",
-						"player": player,
-						"x": x,
-						"y": y
-						}
+		if not self.connection:
+			logging.warning("No active connection to send the move")
+			return
+		
+		if not player_name:
+			logging.error("Player name is missing - cannot send move.")
+			return
+		
+		move_data = {
+			"type": "move",
+			"player": player_name,
+			"x": x, 
+			"y": y
+		}
+
+		try:
 			message = json.dumps(move_data)
 			await self.send(message)
 			response = await self.receive_once()
+
 			if response:
-				print("Server response:", response)
-			logging.info(f"Sent move to server: {move_data}")
-		else:
-			logging.warning("No connection to send move.")
+				logging.info(f"Server response: {response}")
+			else:
+				logging.warning("No response received from server after sending move.")
+
+			logging.info(f"Move sent successfully: {move_data}")
+		except Exception as e:
+			logging.exception(f"Error sending move to server: {e}")
+		
