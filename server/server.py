@@ -1,5 +1,6 @@
 import asyncio
 import websockets
+from game_manager import GameManager
 import json
 import logging
 from player import Player
@@ -16,7 +17,7 @@ class WebSocketServer:
 		logging.info(f"Client connected: {websocket.remote_address}")
 		try:
 			async for message in websocket:
-				logging.info(f"Received: {message}")
+				# logging.info(f"Received: {message}")
 				try:
 					data = json.loads(message)
 					logging.info(f"Parsed JSON data: {data}")
