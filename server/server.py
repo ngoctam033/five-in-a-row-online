@@ -1,16 +1,16 @@
 import asyncio
 import websockets
-from game_manager import GameManager
 import json
 import logging
 from player import Player
+from room import Room
 logging.basicConfig(level=logging.INFO)
 class WebSocketServer:
 	def __init__(self, host='0.0.0.0', port=9000):
 		self.host = host
 		self.port = port
-		self.game_manager = GameManager()
-		self.players = {}  # websocket -> Player mapping, dùng để lưu trữ thông tin người chơi kết nối
+		self.players = []  
+		self.rooms = []
 
 	async def process_message(self, websocket):
 		logging.info(f"Client connected: {websocket.remote_address}")
