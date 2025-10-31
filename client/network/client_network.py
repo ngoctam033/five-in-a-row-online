@@ -88,3 +88,32 @@ class WebSocketClient:
 				print("Server response:", response)
 		else:
 			logging.warning("No connection to send move.")
+
+	def send_create_account(self, playername):
+		"""
+		Gửi thông tin tạo tài khoản player lên server.
+		Args:
+			playername (str): Tên người chơi
+		Return:
+			True: Nếu gửi thành công
+			False: Nếu có lỗi hoặc không có kết nối
+		Tham khảo Hàm send_move
+		Cấu trúc JSON gửi đi
+		account_data = {
+				"type": "create_account",
+				"player": playername
+			}
+		"""
+		return True
+	
+	def send_get_online_players(self):
+		"""
+		Gửi yêu cầu lấy danh sách các player đang online từ server.
+		Return:
+			Danh sách player online nếu thành công, None nếu lỗi hoặc không có kết nối
+		Tham khảo Hàm send_move
+		Cấu trúc JSON gửi đi
+		request_data = {
+			"type": "get_online_players"
+		}
+		"""

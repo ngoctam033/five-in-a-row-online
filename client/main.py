@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 def main():
     load_dotenv()
     server_addr = os.getenv("server")
+    # Giao diện nhập tên user ở terminal
+    username = input("Nhập tên người chơi: ").strip()
     ws_client = WebSocketClient(server_addr)
     ws_client._init_ws()
 
@@ -18,9 +20,8 @@ def main():
         time.sleep(0.1)
         waited += 0.1
 
-    # if ws_client.connected and ws_client.connection is not None:
     root = tk.Tk()
-    app = ChessboardApp(root, ws_client=ws_client)
+    app = ChessboardApp(root, ws_client=ws_client, username=username)
     root.mainloop()
 
 if __name__ == "__main__":

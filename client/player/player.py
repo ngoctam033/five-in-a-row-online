@@ -3,9 +3,10 @@ import logging
 logging.basicConfig(level=logging.INFO)
 class Player:
     """Đại diện cho người chơi"""
-    def __init__(self, piece_id):
-        logging.info(f"Player initialized with piece_id {piece_id}")
+    def __init__(self, piece_id, username):
+        logging.info(f"Player initialized with piece_id {piece_id} and username {username}")
         self.piece_id = piece_id
+        self.username = username
 
     def make_move(self, board, y, x):
         if board.get(y, x) == 0:

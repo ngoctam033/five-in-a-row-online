@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO)
 
 class ChessboardApp:
     """Quản lý giao diện và luồng chính của ứng dụng"""
-    def __init__(self, root, mode: str = "pvp", ws_client: WebSocketClient = None):
+    def __init__(self, root, mode: str = "pvp", ws_client: WebSocketClient = None, username: str = "Player1"):
         self.root = root
         self.root.title("Five in a Row")
         self.root.geometry("1000x1000")
@@ -24,8 +24,7 @@ class ChessboardApp:
         self.canvas.pack(fill=tk.BOTH, expand=True)
         self.renderer = BoardRenderer(self.canvas, self.board, pixel=40)
 
-        self.player1 = Player(piece_id=1)
-        self.player2 = OnlinePlayer(piece_id=2)
+        self.player1 = Player(piece_id=1, username=username)
         self.mode = mode
         self.current_turn = 1  # 1: người chơi 1, 2: người chơi 2 hoặc AI
         self.ws_client = ws_client
@@ -34,6 +33,9 @@ class ChessboardApp:
             from player.aiplayer import AIPlayer
             self.player2 = AIPlayer(piece_id=2)
 
+        # gửi thông tin username để tạo tài khoản đến server
+        if self.ws_client:
+            self.ws_client.send_create_account(self.player1.username)
         self.canvas.bind("<Button-1>", self.on_canvas_click)
         self.renderer.draw_board()
         logging.info("ChessboardApp initialized in %s mode.", self.mode)
@@ -48,7 +50,7 @@ class ChessboardApp:
             logging.info("Player 1 made a move at (%d, %d).", y, x)
             # Gửi thông tin nước đi lên server qua websocket
             if self.ws_client:
-                self.ws_client.send_move(x, y, playername="Player1")
+                self.ws_client.send_move(x, y, playername=self.player1.username)
             # self.root.after(500, self.player2_move)
         else:
             logging.info("It's not Player 1's turn or invalid move at (%d, %d).", y, x)
