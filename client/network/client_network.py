@@ -24,9 +24,6 @@ class WebSocketClient:
 				sent_success = self.send("Hello from client!")
 				if sent_success:
 					logging.info("Initial hello message sent successfully.")
-					# nhận lại phản hồi từ server
-					# response = self.receive_once()
-					# print("Server response:", response)
 				else:
 					logging.warning("Failed to send initial hello message.")
 			else:
@@ -54,7 +51,7 @@ class WebSocketClient:
 		if self.connection:
 			try:
 				response = self.connection.recv()
-				logging.info(f"Received message: {response}")
+				# logging.info(f"Received message: {response}")
 				return response
 			except Exception as e:
 				logging.warning(f"Error receiving message: {e}")
