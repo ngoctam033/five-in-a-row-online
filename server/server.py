@@ -19,8 +19,11 @@ class WebSocketServer:
 				logging.info(f"Received: {message}")
 				try:
 					data = json.loads(message)
-					if websocket not in self.players:
-						self.create_player(websocket)
+					logging.info(f"Parsed JSON data: {data}")
+					if data.get("type") == "create_account":
+						response = self.create_player(websocket, player_name=data.get("player"))
+					if data.get("type") == "get_online_players":
+						response = self.get_online_players()
 					if data.get("type") == "move":
 						response = "This is a response for move message"
 						# response = self.game_manager.handle_move_message(data)
@@ -31,13 +34,24 @@ class WebSocketServer:
 			logging.info("Client disconnected")
 			# Xóa player khi client ngắt kết nối
 			if websocket in self.players:
-				del self.players[websocket]
-
-	def create_player(self, websocket):
+				# Xóa player khi client ngắt kết nối
+				self.players = [p for p in self.players if p.websocket != websocket]
+	
+	def create_player(self, websocket, player_name):
+		# Kiểm tra player đã tồn tại chưa (theo websocket)
+		if any(p.websocket == websocket for p in self.players):
+			logging.info(f"Player for websocket {websocket.remote_address} already exists.")
+			return False
 		player_id = str(websocket.remote_address)
-		player = Player(player_id=player_id, name=f"Player_{player_id}", piece_id=1)
-		self.players[websocket] = player
-		logging.info(f"Created Player: {player}")
+		player = Player(player_id=player_id, name=player_name, piece_id=1, websocket=websocket)
+		self.players.append(player)
+		return True
+
+	def get_online_players(self):
+		"""
+		Trả về list name các người chơi đang online
+		"""
+		return [player.name for player in self.players]
 
 	async def start(self):
 		async with websockets.serve(self.process_message,
