@@ -85,7 +85,7 @@ class WebSocketClient:
 			logging.warning("No connection to send move.")
 			return None
 
-	def send_create_account(self, playername):
+	def send_create_account(self, playername: str) -> bool:
 		"""
 		Gửi thông tin tạo tài khoản player lên server.
 		Args:
@@ -100,7 +100,36 @@ class WebSocketClient:
 				"player": playername
 			}
 		"""
-		return True
+		if not self.connection:
+			logging.warning("No active connection to send account creation request.")
+			return False
+		
+		if not playername:
+			logging.warning("Player name is empty - cannot send account creation request.")
+			return False
+
+		account_data = {
+			"type": "create_account",
+			"player": playername
+		}
+
+		try:
+			message = json.dumps(account_data)
+			sent_success = self.send(message)
+
+			if sent_success: 
+				response = self.receive_once()
+				if response:
+					logging.info(f"Server response after account creation: {response}")
+				else:
+					logging.warning("No response received from server after account creation request.")
+				logging.info(f"Account creation request sent: {account_data}")
+				return True
+			else:
+				logging.warning("Failed to send account creation message.")
+				return False
+		except Exception as e:
+			logging.warning(f"Error sending account creation request: {e}")
 	
 	def send_get_online_players(self):
 		"""
