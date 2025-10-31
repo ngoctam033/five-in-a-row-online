@@ -1,8 +1,5 @@
-import asyncio
 import websocket
 import logging
-import asyncio
-import threading
 import json
 class WebSocketClient:
 	"""Quản lý kết nối, giao tiếp, trạng thái và luồng với server qua websocket"""
@@ -62,29 +59,31 @@ class WebSocketClient:
 	
 	def send_move(self, x, y, playername):
 		"""
-        Gửi thông tin nước đi lên server.
-        Args:
-            x (int): Tọa độ cột
-            y (int): Tọa độ hàng
-            player_name (str): Tên người chơi thực hiện nước đi
-        """
+		Gửi thông tin nước đi lên server.
+		Args:
+			x (int): Tọa độ cột
+			y (int): Tọa độ hàng
+			player_name (str): Tên người chơi thực hiện nước đi
+		Return:
+			response từ server nếu thành công, None nếu lỗi hoặc không có kết nối
+		"""
 		if self.connection:
 			move_data = {
-						"type": "move",
-						"player": playername,
-						"x": x,
-						"y": y
-						}
+				"type": "move",
+				"player": playername,
+				"x": x,
+				"y": y
+			}
 			message = json.dumps(move_data)
 			sended = self.send(message)
 			if not sended:
 				logging.warning("Failed to send move data.")
-				return
+				return None
 			response = self.receive_once()
-			if response:
-				print("Server response:", response)
+			return response
 		else:
 			logging.warning("No connection to send move.")
+			return None
 
 	def send_create_account(self, playername):
 		"""

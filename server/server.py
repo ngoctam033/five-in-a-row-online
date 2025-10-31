@@ -27,7 +27,7 @@ class WebSocketServer:
 						response = self.get_online_players()
 					if data.get("type") == "move":
 						response = "This is a response for move message"
-						# response = self.game_manager.handle_move_message(data)
+						response = self.get_opponent_move(data)
 					await websocket.send(json.dumps(response))
 				except json.JSONDecodeError:
 					logging.warning("Received non-JSON message: %s", message)
@@ -53,6 +53,28 @@ class WebSocketServer:
 		Trả về list name các người chơi đang online
 		"""
 		return [player.name for player in self.players]
+	def get_opponent_move(self, data):
+		"""
+		Trả về nước đi cuối cùng của đối thủ trong room cho client
+		Args:
+			data: dict chứa thông tin
+			ví dụ:
+				move_data = {
+				"type": "move",
+				"player": playername,
+				"x": x,
+				"y": y
+				}
+		Return:
+			dict: thông tin nước đi của đối thủ (nếu có), None nếu chưa có nước đi
+		"""
+		return {
+			"x": 1,
+			"y": 1,
+			"player": "opponent_name",
+			"type": "opponent_move"
+		}
+		
 
 	async def start(self):
 		async with websockets.serve(self.process_message,
