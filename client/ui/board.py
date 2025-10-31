@@ -3,7 +3,38 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
-class Board:
+class BoardRenderer:
+    """Chịu trách nhiệm vẽ bàn cờ lên canvas"""
+    def __init__(self, canvas, board, pixel=40):
+        self.canvas = canvas
+        self.board = board
+        self.pixel = pixel
+        logging.info(f"BoardRenderer initialized with pixel size {self.pixel}")
+
+    def draw_board(self):
+        self.canvas.delete("all")
+        logging.info("Drawing board...")
+        for i in range(self.board.size):
+            for j in range(self.board.size):
+                x, y = i * self.pixel, j * self.pixel
+                self.canvas.create_rectangle(x, y, x + self.pixel, y + self.pixel, outline="black", width=1)
+                piece = self.board.get(j, i)
+                if piece == 1:
+                    logging.info(f"Draw circle at ({j}, {i})")
+                    self.draw_circle(x + self.pixel // 2, y + self.pixel // 2, 18, "blue")
+                elif piece == 2:
+                    logging.info(f"Draw cross at ({j}, {i})")
+                    self.draw_cross(x + self.pixel // 2, y + self.pixel // 2, 18, "red")
+
+    def draw_circle(self, x, y, size, color):
+        logging.info(f"Drawing circle at pixel ({x}, {y}), size {size}, color {color}")
+        self.canvas.create_oval(x - size, y - size, x + size, y + size, outline="black", fill=color, width=3)
+
+    def draw_cross(self, x, y, size, color):
+        logging.info(f"Drawing cross at pixel ({x}, {y}), size {size}, color {color}")
+        self.canvas.create_line(x - size, y - size, x + size, y + size, fill=color, width=5)
+        self.canvas.create_line(x + size, y - size, x - size, y + size, fill=color, width=5)
+class Board(BoardRenderer):
     """Quản lý trạng thái bàn cờ và logic liên quan"""
     def __init__(self, size=25):
         self.size = size
