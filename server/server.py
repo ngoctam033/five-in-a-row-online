@@ -40,6 +40,11 @@ class WebSocketServer:
 		logging.info(f"Created Player: {player}")
 
 	async def start(self):
-		async with websockets.serve(self.process_message, self.host, self.port):
+		async with websockets.serve(self.process_message,
+							  		self.host,
+									self.port,
+									ping_interval=60,   # gửi ping mỗi 60 giây
+									ping_timeout=60     # timeout nếu không nhận được pong trong 60 giây
+									):
 			logging.info(f"WebSocket server started on port {self.port}")
 			await asyncio.Future()  # Run forever
