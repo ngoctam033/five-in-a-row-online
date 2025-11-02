@@ -1,21 +1,12 @@
 class GameManager:
 	"""Quản lý trạng thái và logic của ván cờ"""
-	def __init__(self, board_size=15):
+	def __init__(self, board_size=15, player1 = None, player2 = None):
 		self.board_size = board_size
 		self.board = [[0 for _ in range(board_size)] for _ in range(board_size)]
 		self.current_player = 1
 		self.winner = None
-
-	def make_move(self, x, y, player):
-		"""Xử lý nước đi của người chơi"""
-		if self.board[y][x] == 0 and player == self.current_player:
-			self.board[y][x] = player
-			if self.check_win(x, y, player):
-				self.winner = player
-			else:
-				self.current_player = 2 if player == 1 else 1
-			return True
-		return False
+		self.player_1 = player1
+		self.player_2 = player2
 
 	def check_win(self, x, y, player):
 		"""Kiểm tra người chơi có thắng không sau nước đi vừa rồi"""

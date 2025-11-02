@@ -5,6 +5,7 @@ from ui import BoardRenderer
 from player.player import Player, OnlinePlayer
 import json
 from network.client_network import WebSocketClient
+from logic.board import BoardGameLogic
 
 
 # from player.aiplayer import AIPlayer
@@ -44,19 +45,18 @@ class ChessboardApp:
     def on_canvas_click(self, event):
         x = event.x // self.renderer.pixel
         y = event.y // self.renderer.pixel
-        logging.info("Canvas clicked at pixel (%d, %d), board position (%d, %d).", event.x, event.y, y, x)
-        if self.current_turn == 1 and self.player1.make_move(self.board, y, x):
-            self.current_turn = 2
+        # logging.info("Canvas clicked at pixel (%d, %d), board position (%d, %d).", event.x, event.y, y, x)
+        logging.info("Current turn: Player %d.", self.current_turn)
+        if self.current_turn == 1:
+            make_move = self.player1.make_move(self.board, y, x)
             self.renderer.draw_board()
-            logging.info("Player 1 made a move at (%d, %d).", y, x)
-            # Gửi thông tin nước đi lên server qua websocket
-            if self.ws_client:
-                opponent_move = self.ws_client.send_move(x, y, playername=self.player1.username)
-                if opponent_move:
-                    self.player2_move(opponent_move)
-            # self.root.after(500, self.player2_move)
+            opponent_move = self.ws_client.send_move(x, y, playername=self.player1.username)    
+            if opponent_move:
+                self.current_turn = 2
+                self.player2_move(opponent_move)
         else:
             logging.info("It's not Player 1's turn or invalid move at (%d, %d).", y, x)
+        # board_game_logic = BoardGameLogic().check_win(self.board.grid)
 
     def player2_move(self, move):
         if self.current_turn == 2:
