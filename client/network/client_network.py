@@ -130,8 +130,8 @@ class WebSocketClient:
 				return False
 		except Exception as e:
 			logging.warning(f"Error sending account creation request: {e}")
-	
-	def send_get_online_players(self):
+
+	def send_get_online_players(self, player_name: str):
 		"""
 		Gửi yêu cầu lấy danh sách các player đang online từ server.
 		Return:
@@ -142,3 +142,31 @@ class WebSocketClient:
 			"type": "get_online_players"
 		}
 		"""
+		if not self.connection:
+			logging.warning("No active connection to request online players.")
+			return None
+
+		request_data = {
+			"type": "get_online_players",
+			"player": player_name
+		}
+
+		try:
+			message = json.dumps(request_data)
+			sent_success = self.send(message)
+
+			if sent_success:
+				response = self.receive_once()
+				if response:
+					logging.info(f"Received online players list: {response}")
+					players_list = json.loads(response)
+					return players_list
+				else:
+					logging.warning("No response received from server for online players request.")
+					return None
+			else:
+				logging.warning("Failed to send online players request.")
+				return None
+		except Exception as e:
+			logging.warning(f"Error requesting online players: {e}")
+			return None
