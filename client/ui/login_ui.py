@@ -1,10 +1,15 @@
 # login.py
 import tkinter as tk
 from tkinter import ttk
+from ui.game_ui import ChessboardApp
+from network.client_network import WebSocketClient
+import logging
+logging.basicConfig(level=logging.INFO)
 
 class LoginUI:
-    def __init__(self, root, on_login_callback):
+    def __init__(self, root, ws_client, on_login_callback):
         self.root = root
+        self.ws_client = ws_client
         self.on_login_callback = on_login_callback
 
         # ======= Cấu hình cửa sổ =======
@@ -45,14 +50,58 @@ class LoginUI:
             foreground="green"
         )
         self.message_label.pack(pady=15)
-
-        # ======= Nút Play =======
-        play_button = ttk.Button(
+        # +++
+        # gửi thông tin username để tạo tài khoản đến server
+        find_match_button = ttk.Button(
             self.frame, 
-            text="Play / Find Match", 
-            command=self.on_play_click
+            text="Find Match", 
+            command=self.on_find_match_click
         )
-        play_button.pack(pady=10, ipadx=15, ipady=5)
+        find_match_button.pack(pady=10, ipadx=15, ipady=5)
+        # ======= Nút Play =======
+        # play_button = ttk.Button(
+        #     self.frame, 
+        #     text="Play / Find Match", 
+        #     command=self.on_play_click
+        # )
+        # play_button.pack(pady=10, ipadx=15, ipady=5)
+    def on_find_match_click(self):
+        # Gọi ws_client.get_online_players để lấy danh sách user online
+        if not self.ws_client:
+            self.message_label.config(text="❌ Không có kết nối server.", foreground="red")
+            return
+        if self.ws_client:
+            self.ws_client.send_create_account(self.name_entry.get().strip())
+        online_players = self.ws_client.send_get_online_players(self.name_entry.get().strip())
+        if not online_players:
+            self.message_label.config(text="❌ Không lấy được danh sách user online.", foreground="red")
+            return
+        # Hiển thị danh sách user online trong cửa sổ mới
+        top = tk.Toplevel(self.root)
+        top.title("Danh sách người chơi online")
+        top.geometry("400x400")
+        label = ttk.Label(top, text="Người chơi đang online:", font=("Arial", 14, "bold"))
+        label.pack(pady=10)
+        self.selected_opponent = None
+        listbox = tk.Listbox(top, font=("Arial", 13), width=30, height=15, selectmode=tk.SINGLE)
+        for user in online_players:
+            listbox.insert(tk.END, user)
+        listbox.pack(pady=10)
+
+        def on_select(event):
+            selection = listbox.curselection()
+            if selection:
+                idx = selection[0]
+                opponent_name = listbox.get(idx)
+                self.selected_opponent = opponent_name
+                # Tô đậm vùng chọn
+                listbox.selection_clear(0, tk.END)
+                listbox.selection_set(idx)
+                listbox.activate(idx)
+                # In ra terminal
+                logging.info(f"Selected opponent: {opponent_name}")
+
+        listbox.bind('<<ListboxSelect>>', on_select)
 
     # ------------------------------------
     def center_window(self):
