@@ -11,6 +11,7 @@ class WebSocketServer:
 		self.host = host
 		self.port = port
 		self.rooms = []
+		self.players = []
 
 	async def process_message(self, websocket):
 		logging.info(f"Client connected: {websocket.remote_address}")
@@ -32,10 +33,8 @@ class WebSocketServer:
 					logging.warning("Received non-JSON message: %s", message)
 		except websockets.ConnectionClosed:
 			logging.info("Client disconnected")
-			# Xóa player khi client ngắt kết nối
-			if websocket in self.players:
-				# Xóa player khi client ngắt kết nối
-				self.players = [p for p in self.players if p.websocket != websocket]
+			self.players = [p for p in self.players if p.websocket != websocket]
+			await websocket.close()  # Đảm bảo đóng kết nối phía server
 	
 	def create_player(self, websocket, player_name):
 		# Kiểm tra player đã tồn tại chưa (theo websocket)
