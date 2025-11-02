@@ -24,7 +24,7 @@ class WebSocketServer:
 					if data.get("type") == "create_account":
 						response = self.create_player(websocket, player_name=data.get("player"))
 					if data.get("type") == "get_online_players":
-						response = self.get_online_players()
+						response = self.get_online_players(user_name=data.get("player"))
 					if data.get("type") == "move":
 						response = "This is a response for move message"
 						response = self.get_opponent_move(data)
@@ -46,11 +46,13 @@ class WebSocketServer:
 		self.players.append(player)
 		return True
 
-	def get_online_players(self):
+	def get_online_players(self, user_name):
 		"""
-		Trả về list name các người chơi đang online
+		Trả về list name các người chơi đang online, ngoại trừ user_name
+		Args:
+			user_name (str): tên người chơi yêu cầu
 		"""
-		return [player.name for player in self.players]
+		return [player.name for player in self.players if player.name != user_name]
 	def get_opponent_move(self, data):
 		"""
 		Trả về nước đi cuối cùng của đối thủ trong room cho client
