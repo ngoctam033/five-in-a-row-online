@@ -10,7 +10,6 @@ class WebSocketServer:
 	def __init__(self, host='0.0.0.0', port=9000):
 		self.host = host
 		self.port = port
-		self.players = []  
 		self.rooms = []
 
 	async def process_message(self, websocket):
@@ -75,7 +74,19 @@ class WebSocketServer:
 			"type": "opponent_move"
 		}
 		
-
+	def find_room_by_playername(self, playername):
+		"""
+		Tìm kiếm room có player1 hoặc player2 có tên bằng playername
+		Args:
+			playername (str): tên người chơi cần tìm
+		Return:
+			Room object nếu tìm thấy, None nếu không có
+		"""
+		for room in self.rooms:
+			if (room.player1 and room.player1.name == playername) or (room.player2 and room.player2.name == playername):
+				return room
+		return None
+	
 	async def start(self):
 		async with websockets.serve(self.process_message,
 							  		self.host,
