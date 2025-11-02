@@ -98,9 +98,11 @@ class LoginUI:
                 listbox.selection_clear(0, tk.END)
                 listbox.selection_set(idx)
                 listbox.activate(idx)
-                # In ra terminal
-                logging.info(f"Selected opponent: {opponent_name}")
-
+                # Gọi hàm kiểm tra khả năng thách đấu
+                user_name = self.name_entry.get().strip()
+                challengeable = self.ws_client.send_check_challengeable(user_name, opponent_name)
+                print(f"Challengeable ({user_name} vs {opponent_name}): {challengeable}")
+        
         listbox.bind('<<ListboxSelect>>', on_select)
 
     # ------------------------------------

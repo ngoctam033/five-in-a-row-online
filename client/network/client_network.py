@@ -170,3 +170,42 @@ class WebSocketClient:
 		except Exception as e:
 			logging.warning(f"Error requesting online players: {e}")
 			return None
+		
+	def send_check_challengeable(self, user_name: str, opponent_name: str) -> bool:
+		"""
+		Gửi yêu cầu kiểm tra xem user_name và opponent_name có thể thách đấu với nhau không.
+		Args:
+			user_name (str): tên người chơi gửi yêu cầu
+			opponent_name (str): tên người chơi bị thách đấu
+		Return:
+			True nếu server xác nhận có thể thách đấu, False nếu không hoặc lỗi.
+		"""
+		if not self.connection:
+			logging.warning("No active connection to check challengeable.")
+			return False
+
+		request_data = {
+			"type": "check_challengeable",
+			"player": user_name,
+			"opponent": opponent_name
+		}
+
+		try:
+			message = json.dumps(request_data)
+			sent_success = self.send(message)
+
+			if sent_success:
+				response = self.receive_once()
+				if response:
+					logging.info(f"Received challengeable check response: {response}")
+					result = json.loads(response)
+					return result
+				else:
+					logging.warning("No response received from server for challengeable check.")
+					return None
+			else:
+				logging.warning("Failed to send challengeable check request.")
+				return None
+		except Exception as e:
+			logging.warning(f"Error requesting challengeable check: {e}")
+			return None

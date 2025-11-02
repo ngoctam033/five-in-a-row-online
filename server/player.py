@@ -14,9 +14,9 @@ class Player:
             "player_id": self.player_id,
             "name": self.name,
             "piece_id": self.piece_id,
-            "user_name": self.user_name,
+            "user_name": self.name,
             "score": self.score
         }
 
     def __repr__(self):
-        return f"Player({self.player_id}, {self.name}, user={self.user_name}, piece={self.piece_id}, score={self.score})"
+        return f"Player({self.player_id}, {self.name}, piece={self.piece_id}, score={self.score})"

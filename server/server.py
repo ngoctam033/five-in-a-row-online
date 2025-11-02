@@ -20,14 +20,16 @@ class WebSocketServer:
 				# logging.info(f"Received: {message}")
 				try:
 					data = json.loads(message)
+					response = "This is a response for move message"
 					logging.info(f"Parsed JSON data: {data}")
 					if data.get("type") == "create_account":
 						response = self.create_player(websocket, player_name=data.get("player"))
 					if data.get("type") == "get_online_players":
 						response = self.get_online_players(user_name=data.get("player"))
 					if data.get("type") == "move":
-						response = "This is a response for move message"
 						response = self.get_opponent_move(data)
+					if data.get("type") == "check_challengeable":
+						response = self.check_challengeable(user_name=data.get("player"), opponent_name=data.get("opponent"))
 					await websocket.send(json.dumps(response))
 				except json.JSONDecodeError:
 					logging.warning("Received non-JSON message: %s", message)
@@ -74,6 +76,27 @@ class WebSocketServer:
 			"player": "opponent_name",
 			"type": "opponent_move"
 		}
+
+	def check_challengeable(self, user_name, opponent_name):
+		"""
+		Kiểm tra xem hai user có thể ghép cặp thách đấu với nhau không.
+		Điều kiện:
+		- Cả hai user đều đang online
+		- Cả hai user đều chưa tham gia phòng nào
+		Args:
+			user_name (str): tên người chơi yêu cầu
+			opponent_name (str): tên đối thủ
+		Return:
+			bool: True nếu có thể thách đấu, False nếu không
+		"""
+		user = next((p for p in self.players if p.name == user_name), None)
+		opponent = next((p for p in self.players if p.name == opponent_name), None)
+		logging.info(f"Checking challengeable: user={user}, opponent={opponent}")
+		if not user or not opponent:
+			return False
+		if self.find_room_by_playername(opponent_name) is not None:
+			return False
+		return True
 		
 	def find_room_by_playername(self, playername):
 		"""
@@ -92,8 +115,8 @@ class WebSocketServer:
 		async with websockets.serve(self.process_message,
 							  		self.host,
 									self.port,
-									ping_interval=60,   # gửi ping mỗi 60 giây
-									ping_timeout=60     # timeout nếu không nhận được pong trong 60 giây
+									ping_interval=600,   # gửi ping mỗi 600 giây
+									ping_timeout=600     # timeout nếu không nhận được pong trong 600 giây
 									):
 			logging.info(f"WebSocket server started on port {self.port}")
 			await asyncio.Future()  # Run forever
