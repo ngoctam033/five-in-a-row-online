@@ -4,7 +4,6 @@ class Player:
         self.player_id = player_id      # Mã định danh người chơi (có thể là số hoặc chuỗi)
         self.name = name                # Tên người chơi
         self.piece_id = piece_id        # Loại quân cờ (1 hoặc 2)
-        self.user_name = user_name      # Tên người dùng (do user nhập)
         self.score = 0                  # Điểm số (nếu có)
         self.websocket = websocket      # Kết nối websocket của người chơi
         self.has_room = False           # Kiểm tra user đã có room hay chưa
