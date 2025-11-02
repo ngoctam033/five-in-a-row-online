@@ -11,6 +11,7 @@ class WebSocketServer:
 		self.host = host
 		self.port = port
 		self.rooms = []
+		self.players = []
 
 	async def process_message(self, websocket):
 		logging.info(f"Client connected: {websocket.remote_address}")
@@ -48,10 +49,11 @@ class WebSocketServer:
 		return True
 
 	def get_online_players(self):
-		"""
-		Trả về list name các người chơi đang online
-		"""
-		return [player.name for player in self.players]
+    	"""
+   		Trả về danh sách tên các người chơi đang online nhưng chưa có phòng (has_room = False)
+    	"""
+    	return [player.name for player in self.players if not player.has_room]
+
 	def get_opponent_move(self, data):
 		"""
 		Trả về nước đi cuối cùng của đối thủ trong room cho client
