@@ -1,7 +1,6 @@
 
 import tkinter as tk
 from ui.game_ui import ChessboardApp
-from ui.login_ui import LoginUI
 from network.client_network import WebSocketClient
 import time
 import os
