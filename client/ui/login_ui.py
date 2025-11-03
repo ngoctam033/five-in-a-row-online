@@ -1,13 +1,16 @@
 # login.py
 import tkinter as tk
 from tkinter import ttk
+import threading
+import json
 from ui.game_ui import ChessboardApp
 from network.client_network import WebSocketClient
 import logging
 logging.basicConfig(level=logging.INFO)
 
 class LoginUI:
-    def __init__(self, root, ws_client, on_login_callback):
+    def __init__(self, root, ws_client: WebSocketClient,
+                 on_login_callback):
         self.root = root
         self.ws_client = ws_client
         self.on_login_callback = on_login_callback
@@ -65,18 +68,23 @@ class LoginUI:
         #     command=self.on_play_click
         # )
         # play_button.pack(pady=10, ipadx=15, ipady=5)
+
     def on_find_match_click(self):
-        # Gọi ws_client.get_online_players để lấy danh sách user online
+        username = self.name_entry.get().strip()
         if not self.ws_client:
             self.message_label.config(text="❌ Không có kết nối server.", foreground="red")
             return
-        if self.ws_client:
-            self.ws_client.send_create_account(self.name_entry.get().strip())
-        online_players = self.ws_client.send_get_online_players(self.name_entry.get().strip())
+        self.ws_client.send_create_account(username)
+        online_players = self.get_online_players(username)
         if not online_players:
             self.message_label.config(text="❌ Không lấy được danh sách user online.", foreground="red")
             return
-        # Hiển thị danh sách user online trong cửa sổ mới
+        self.show_online_players_window(online_players)
+
+    def get_online_players(self, username):
+        return self.ws_client.send_get_online_players(username)
+
+    def show_online_players_window(self, online_players):
         top = tk.Toplevel(self.root)
         top.title("Danh sách người chơi online")
         top.geometry("400x400")
@@ -87,23 +95,35 @@ class LoginUI:
         for user in online_players:
             listbox.insert(tk.END, user)
         listbox.pack(pady=10)
+        listbox.bind('<<ListboxSelect>>', lambda event: self.handle_opponent_selection(listbox))
 
-        def on_select(event):
-            selection = listbox.curselection()
-            if selection:
-                idx = selection[0]
-                opponent_name = listbox.get(idx)
-                self.selected_opponent = opponent_name
-                # Tô đậm vùng chọn
-                listbox.selection_clear(0, tk.END)
-                listbox.selection_set(idx)
-                listbox.activate(idx)
-                # Gọi hàm kiểm tra khả năng thách đấu
-                user_name = self.name_entry.get().strip()
-                challengeable = self.ws_client.send_check_challengeable(user_name, opponent_name)
-                print(f"Challengeable ({user_name} vs {opponent_name}): {challengeable}")
-        
-        listbox.bind('<<ListboxSelect>>', on_select)
+    def handle_opponent_selection(self, listbox):
+        selection = listbox.curselection()
+        if selection:
+            idx = selection[0]
+            opponent_name = listbox.get(idx)
+            self.selected_opponent = opponent_name
+            # Tô đậm vùng chọn
+            listbox.selection_clear(0, tk.END)
+            listbox.selection_set(idx)
+            listbox.activate(idx)
+            self.check_and_start_challenge(opponent_name)
+
+    def check_and_start_challenge(self, opponent_name):
+        user_name = self.name_entry.get().strip()
+        challengeable = self.ws_client.send_check_challengeable(user_name, opponent_name)
+        print(f"Challengeable ({user_name} vs {opponent_name}): {challengeable}")
+        if challengeable:
+            self.selected_opponent = opponent_name
+            if self.on_login_callback:
+                self.on_login_callback(user_name, opponent_name)
+
+            sended = self.ws_client.send_create_room(user_name, opponent_name)
+            logging.info(f"Create room request sent: {sended}")
+        else:
+            self.message_label.config(text=f"❌ Không thể thách đấu với {opponent_name}.", foreground="red")
+            self.selected_opponent = None
+
 
     # ------------------------------------
     def center_window(self):
@@ -120,11 +140,11 @@ class LoginUI:
         if not username:
             self.message_label.config(text="⚠️ Vui lòng nhập tên!", foreground="red")
             return
-        self.message_label.config(
-            text=f"✅ Đã nhận được username: {username}", 
-            foreground="green"
-        )
-
-        # Sau này có thể gửi username lên server
-        if self.on_login_callback:
-            self.on_login_callback(username)
+        # Nếu đã chọn opponent và challengeable thì bắt đầu game
+        if hasattr(self, 'selected_opponent') and self.selected_opponent:
+            self.message_label.config(text=f"✅ Bắt đầu trận đấu với {self.selected_opponent}", foreground="green")
+            if self.on_login_callback:
+                self.on_login_callback(username, self.selected_opponent)
+            # Có thể truyền thêm opponent cho ChessboardApp nếu cần
+        else:
+            self.message_label.config(text="⚠️ Vui lòng chọn đối thủ hợp lệ!", foreground="red")

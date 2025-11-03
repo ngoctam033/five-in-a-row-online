@@ -24,6 +24,9 @@ class WebSocketServer:
 					logging.info(f"Parsed JSON data: {data}")
 					if data.get("type") == "create_account":
 						response = self.create_player(websocket, player_name=data.get("player"))
+					if data.get("type") == "create_room":
+						logging.info("Creating room with players: %s vs %s", data.get("player"), data.get("opponent"))
+						response = self.create_room_with_players(player1_name=data.get("player"), player2_name=data.get("opponent"))
 					if data.get("type") == "get_online_players":
 						response = self.get_online_players(user_name=data.get("player"))
 					if data.get("type") == "move":
@@ -94,8 +97,15 @@ class WebSocketServer:
 		logging.info(f"Checking challengeable: user={user}, opponent={opponent}")
 		if not user or not opponent:
 			return False
-		if self.find_room_by_playername(opponent_name) is not None:
+		room_user = self.find_room_by_playername(user_name)
+		room_opponent = self.find_room_by_playername(opponent_name)
+		# Nếu cả hai cùng chung một room thì trả về True
+		if room_user and room_opponent and room_user == room_opponent:
+			return True
+		# Nếu opponent đã ở phòng khác thì không thể thách đấu
+		if room_opponent is not None:
 			return False
+		# Nếu cả hai chưa ở phòng nào thì có thể thách đấu
 		return True
 		
 	def find_room_by_playername(self, playername):
@@ -111,6 +121,73 @@ class WebSocketServer:
 				return room
 		return None
 	
+	def create_room_with_players(self, player1_name, player2_name):
+		"""
+		Tạo một room mới với 2 player theo tên, thêm vào danh sách rooms.
+		Kiểm tra hợp lệ: cả 2 đều online, chưa ở phòng nào, không trùng tên.
+		Args:
+			player1_name (str): tên người chơi 1
+			player2_name (str): tên người chơi 2
+		Return:
+			dict: thông tin room nếu tạo thành công, None nếu lỗi
+		"""
+		if player1_name == player2_name:
+			return None
+		player1 = next((p for p in self.players if p.name == player1_name), None)
+		player2 = next((p for p in self.players if p.name == player2_name), None)
+		if not player1 or not player2:
+			return None
+		# Kiểm tra cả 2 chưa ở phòng nào
+		if self.find_room_by_playername(player1_name) or self.find_room_by_playername(player2_name):
+			return None
+		# self.notify_opponent_challenged(player2_name, player1_name)
+		# Tạo room id duy nhất
+		room_id = f"room_{len(self.rooms)+1}"
+		room = Room(room_id=room_id, player1=player1, player2=player2)
+		self.rooms.append(room)
+		# Trả về thông tin room dạng dict
+		return {
+			"room_id": room_id,
+			"player1": player1.name,
+			"player2": player2.name
+		}
+	# def notify_opponent_challenged(self, opponent_name, challenger_name):
+	# 	"""
+	# 	Gửi thông báo cho player2 (opponent) rằng đã có đối thủ thách đấu và chờ phản hồi.
+	# 	Args:
+	# 		opponent_name (str): tên người chơi bị thách đấu
+	# 		challenger_name (str): tên người chơi gửi thách đấu
+	# 	Return:
+	# 		dict: phản hồi từ opponent hoặc None nếu timeout/lỗi
+	# 	"""
+	# 	opponent = next((p for p in self.players if p.name == opponent_name), None)
+	# 	if opponent and opponent.websocket:
+	# 		message = {
+	# 			"type": "challenged",
+	# 			"opponent": opponent_name,
+	# 			"challenger": challenger_name,
+	# 			"msg": f"Bạn đã được {challenger_name} thách đấu!"
+	# 		}
+	# 		try:
+	# 			opponent.websocket.send(json.dumps(message))
+	# 			logging.info(f"Sent challenge notification to {opponent_name}")
+	# 			# Chờ phản hồi từ opponent (timeout 30s)
+	# 			try:
+	# 				response = asyncio.wait_for(opponent.websocket.recv(), timeout=30)
+	# 				logging.info(f"Received challenge response from {opponent_name}: {response}")
+	# 				response_data = json.loads(response)
+	# 				if response_data.get("type") == "challenge_response":
+	# 					return response_data
+	# 				else:
+	# 					logging.warning(f"Unexpected response type from {opponent_name}: {response_data}")
+	# 					return None
+	# 			except asyncio.TimeoutError:
+	# 				logging.warning(f"Timeout waiting for challenge response from {opponent_name}")
+	# 				return None
+	# 		except Exception as e:
+	# 			logging.warning(f"Failed to notify opponent {opponent_name}: {e}")
+	# 			return None
+	# 	return None
 	async def start(self):
 		async with websockets.serve(self.process_message,
 							  		self.host,
@@ -120,3 +197,5 @@ class WebSocketServer:
 									):
 			logging.info(f"WebSocket server started on port {self.port}")
 			await asyncio.Future()  # Run forever
+
+

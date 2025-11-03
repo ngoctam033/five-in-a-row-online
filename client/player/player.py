@@ -20,5 +20,5 @@ class OnlinePlayer(Player):
     """Đại diện cho người chơi online, nhận nước đi từ network"""
     def make_move(self, board, y, x):
         # Có thể thêm logic nhận nước đi từ client/network ở đây
-        logging.info(f"OnlinePlayer {self.piece_id} thực hiện nước đi tại ({y}, {x}) qua mạng.")
+        # logging.info(f"OnlinePlayer {self.piece_id} thực hiện nước đi tại ({y}, {x}) qua mạng.")
         return super().make_move(board, y, x)

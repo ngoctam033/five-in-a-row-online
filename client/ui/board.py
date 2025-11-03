@@ -13,21 +13,21 @@ class BoardRenderer:
 
     def draw_board(self):
         self.canvas.delete("all")
-        logging.info("Drawing board...")
+        # logging.info("Drawing board...")
         for i in range(self.board.size):
             for j in range(self.board.size):
                 x, y = i * self.pixel, j * self.pixel
                 self.canvas.create_rectangle(x, y, x + self.pixel, y + self.pixel, outline="black", width=1)
                 piece = self.board.get(j, i)
                 if piece == 1:
-                    logging.info(f"Draw circle at ({j}, {i})")
+                    # logging.info(f"Draw circle at ({j}, {i})")
                     self.draw_circle(x + self.pixel // 2, y + self.pixel // 2, 18, "blue")
                 elif piece == 2:
-                    logging.info(f"Draw cross at ({j}, {i})")
+                    # logging.info(f"Draw cross at ({j}, {i})")
                     self.draw_cross(x + self.pixel // 2, y + self.pixel // 2, 18, "red")
 
     def draw_circle(self, x, y, size, color):
-        logging.info(f"Drawing circle at pixel ({x}, {y}), size {size}, color {color}")
+        # logging.info(f"Drawing circle at pixel ({x}, {y}), size {size}, color {color}")
         self.canvas.create_oval(x - size, y - size, x + size, y + size, outline="black", fill=color, width=3)
 
     def draw_cross(self, x, y, size, color):
@@ -67,7 +67,7 @@ class Board(BoardRenderer):
     def set(self, y, x, value):
         if self.is_in(y, x):
             self.grid[y][x] = value
-            logging.info(f"Set cell ({y}, {x}) to {value}")
+            # logging.info(f"Set cell ({y}, {x}) to {value}")
         else:
             logging.info(f"Set cell ({y}, {x}) failed: out of bounds")
 

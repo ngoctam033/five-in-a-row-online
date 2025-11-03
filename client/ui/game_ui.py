@@ -61,7 +61,7 @@ class ChessboardApp:
     def player2_move(self, move):
         if self.current_turn == 2:
             move = json.loads(move)
-            logging.info("Player 2's turn.")
+            logging.info(f"Player 2: {self.player2.username} turn.")
             x = move["x"]
             y = move["y"]
             move = self.player2.make_move(self.board, y, x)
