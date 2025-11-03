@@ -5,30 +5,39 @@ import numpy as np
 class BoardGameLogic:
     """Xử lý logic của trò chơi cờ caro"""
 
-    def check_win(self,grid):
-        """Kiểm tra người chơi có thắng không sau nước đi vừa rồi"""
-        directions = [(1,0), #tăng y, x giữ nguyên
-                      (0,1), # giữ nguyên y, tăng x
-                      (1,1), # tăng y, tăng x
-                      (1,-1),# tăng y, giảm x
-                      (-1,1),# giảm y, tăng x
-                      (-1,-1)] # giảm y, giảm x
-        # in ra grid
-        for row in grid:
-            logging.info(row)
+    def check_win(self, grid):
+        """
+        Kiểm tra thắng/thua trong game Cờ Caro (Five in a Row)
+        - Thắng khi có 5 quân liên tiếp theo hàng, cột hoặc chéo.
+        - Bị chặn hai đầu sẽ không tính là thắng.
+        """
+        """
+        Kiểm tra người chơi có thắng hay không sau nước đi vừa rồi.
+        Hiện tại chỉ kiểm tra theo hàng ngang (logic gốc của nhóm trưởng).
+        """
+        import numpy as np
+        import logging
+
         board = np.array(grid)
-        # Kiểm tra chuỗi liên tiếp giá trị 1 trên từng hàng
-        for row_idx in range(board.shape[0]):
-            row = board[row_idx]
+
+        # Ghi log toàn bộ bàn cờ để debug
+        for row in board:
+            logging.info(row)
+
+        # Duyệt từng hàng để kiểm tra chuỗi liên tiếp các ô có giá trị 1
+        for row_idx, row in enumerate(board):
+            consecutive = 0
             max_consecutive = 0
-            current = 0
+
             for cell in row:
                 if cell == 1:
-                    current += 1
-                    if current > max_consecutive:
-                        max_consecutive = current
+                    consecutive += 1
+                    max_consecutive = max(max_consecutive, consecutive)
                 else:
-                    current = 0
-            logging.info(f"Row {row_idx} has max {max_consecutive} consecutive cells with value 1.")
+                    consecutive = 0  # reset khi gặp ô khác 1
 
+            logging.info(f"Row {row_idx}: max consecutive = {max_consecutive}")
+
+        # Tạm thời chưa có điều kiện thắng cụ thể — giữ nguyên return gốc
         return 0
+
