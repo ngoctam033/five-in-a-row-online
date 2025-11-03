@@ -21,11 +21,11 @@ def main():
         waited += 0.1
 
     root = tk.Tk()
-    def start_game(username):
+    def start_game(username, opponent_name):
         # Xóa giao diện login
         for widget in root.winfo_children():
             widget.destroy()
-        app = ChessboardApp(root, ws_client=ws_client, username1=username, username2="Player2")
+        app = ChessboardApp(root, ws_client=ws_client, username1=username, username2=opponent_name)
 
     login_ui = LoginUI(root, ws_client=ws_client, on_login_callback=start_game)
     root.mainloop()
