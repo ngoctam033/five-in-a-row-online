@@ -24,8 +24,13 @@ class WebSocketServer:
 					logging.info(f"Parsed JSON data: {data}")
 
 					msg_type = data.get("type")
+
+					# --- XỬ LÝ CÁC HÀM ASYNC (như "move") ---
 					if msg_type == "move":
+						# Bây giờ chúng ta 'await' hàm này
 						response = await self.get_opponent_move(data)
+					
+					# --- XỬ LÝ CÁC HÀM SYNC (như "create_account") ---
 					else:
 						if msg_type == "create_account":
 							response = self.create_player(websocket, player_name=data.get("player"))
@@ -35,6 +40,8 @@ class WebSocketServer:
 							response = self.check_challengeable(user_name=data.get("player"), opponent_name=data.get("opponent"))
 						else:
 							response = {"type": "error", "message": "Unknown message type"}
+
+					# Chỉ gửi phản hồi nếu 'response' không phải là None
 					if response:
 						await websocket.send(json.dumps(response))
 
@@ -56,8 +63,6 @@ class WebSocketServer:
 
 	def get_online_players(self, user_name):
 		return [player.name for player in self.players if player.name != user_name]
-
-	
 	async def get_opponent_move(self, data):
 		player_name = data.get("player")
 		
