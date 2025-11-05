@@ -6,6 +6,7 @@ from player.player import Player, OnlinePlayer
 import json
 from network.client_network import WebSocketClient
 from logic.board import BoardGameLogic
+import time
 
 
 # from player.aiplayer import AIPlayer
@@ -51,6 +52,11 @@ class ChessboardApp:
         self.canvas.bind("<Button-1>", self.on_canvas_click)
         self.renderer.draw_board()
         logging.info("ChessboardApp initialized in %s mode.", self.mode)
+        # --- Thời gian ván đấu ---
+        self.start_time = time.time()
+        self.elapsed_label = tk.Label(root, text="Thời gian: 00:00", font=("Arial", 14), fg="blue")
+        self.elapsed_label.place(x=850, y=60)
+        self.update_elapsed_time()
         self.listen_opponent_move()
 
     def listen_opponent_move(self):
@@ -71,6 +77,11 @@ class ChessboardApp:
                 elif check_win == "X won":
                     tk.messagebox.showinfo("Kết quả", "Bạn đã thua!")
                     self.is_ended = True
+                if self.is_ended:
+                    elapsed = int(time.time() - self.start_time)
+                    minutes = elapsed // 60
+                    seconds = elapsed % 60
+                    tk.messagebox.showinfo("Thời gian trận đấu", f"Thời lượng: {minutes} phút {seconds} giây")
             # logging.info(f"Current turn after polling: Player {self.current_turn}.")
             self.root.after(500, check_move)  # luôn gọi lại sau 500ms
         self.root.after(500, check_move)
@@ -98,6 +109,11 @@ class ChessboardApp:
                 elif check_win == "X won":
                     tk.messagebox.showinfo("Kết quả", "Bạn đã thua!")
                     self.is_ended = True
+                if self.is_ended:
+                    elapsed = int(time.time() - self.start_time)
+                    minutes = elapsed // 60
+                    seconds = elapsed % 60
+                    tk.messagebox.showinfo("Thời gian trận đấu", f"Thời lượng: {minutes} phút {seconds} giây")
         else:
             logging.info("It's not Player 1's turn or invalid move at (%d, %d).", y, x)
             check_win = self.board_game_logic.is_win(self.board.grid)
@@ -125,3 +141,23 @@ class ChessboardApp:
                 logging.info("Turn changed to Player 1.")
             else:
                 logging.info("Player 2 could not make a move.")
+                
+    def update_elapsed_time(self):
+        """Hiển thị thời gian suy nghĩ của đối thủ (player2). Đếm khi current_turn==2, reset khi current_turn==1."""
+        if not self.is_ended:
+            if not hasattr(self, '_opponent_think_start'):
+                self._opponent_think_start = None
+            if self.current_turn == 2:
+                # Nếu vừa chuyển sang lượt đối thủ thì bắt đầu đếm lại
+                if self._opponent_think_start is None:
+                    self._opponent_think_start = time.time()
+                elapsed = int(time.time() - self._opponent_think_start)
+                minutes = elapsed // 60
+                seconds = elapsed % 60
+                self.elapsed_label.config(text=f"Thời gian: {minutes:02d}:{seconds:02d}")
+            else:
+                # Nếu vừa chuyển sang lượt mình thì reset label và timer
+                if self._opponent_think_start is not None:
+                    self.elapsed_label.config(text="Thời gian: 00:00")
+                    self._opponent_think_start = None
+        self.root.after(1000, self.update_elapsed_time)
