@@ -115,11 +115,11 @@ class LoginUI:
         print(f"Challengeable ({user_name} vs {opponent_name}): {challengeable}")
         if challengeable:
             self.selected_opponent = opponent_name
-            if self.on_login_callback:
-                self.on_login_callback(user_name, opponent_name)
 
             sended = self.ws_client.send_create_room(user_name, opponent_name)
-            logging.info(f"Create room request sent: {sended}")
+            if self.on_login_callback:
+                self.on_login_callback(user_name, opponent_name, sended["current_turn"])
+            # logging.info(f"Create room request sent: {sended}")
         else:
             self.message_label.config(text=f"❌ Không thể thách đấu với {opponent_name}.", foreground="red")
             self.selected_opponent = None

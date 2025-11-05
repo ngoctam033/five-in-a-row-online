@@ -34,7 +34,7 @@ class BoardRenderer:
         logging.info(f"Drawing cross at pixel ({x}, {y}), size {size}, color {color}")
         self.canvas.create_line(x - size, y - size, x + size, y + size, fill=color, width=5)
         self.canvas.create_line(x + size, y - size, x - size, y + size, fill=color, width=5)
-class Board(BoardRenderer):
+class Board:
     """Quản lý trạng thái bàn cờ và logic liên quan"""
     def __init__(self, size=25):
         self.size = size

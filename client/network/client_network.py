@@ -34,7 +34,7 @@ class WebSocketClient:
 			try:
 				# await self.connection.send(message)
 				self.connection.send(message)
-				logging.info(f"Sent message: {message}")
+				# logging.info(f"Sent message: {message}")
 				return True
 			except Exception as e:
 				logging.warning(f"Error sending message: {e}")
@@ -218,6 +218,28 @@ class WebSocketClient:
 			logging.warning(f"Error requesting challengeable check: {e}")
 			return None
 	
+	def receive_opponent_move(self):
+		"""
+		Nhận message về nước đi của đối thủ từ server.
+		Return:
+			dict: thông tin nước đi của đối thủ nếu nhận được, None nếu lỗi hoặc không có kết nối
+		"""
+		if not self.connection:
+			logging.warning("No connection to receive opponent move.")
+			return None
+		try:
+			message = self.receive_once()
+			data = json.loads(message)
+			if isinstance(data, dict) and data.get("type") == "opponent_move":
+				logging.info(f"Received opponent move: {data}")
+				return data
+			else:
+				logging.info(f"Received non-opponent move message: {data}")
+				return None
+		except Exception as e:
+			logging.warning(f"Error receiving opponent move: {e}")
+			return None
+	
 	def send_create_room(self, user_name: str, opponent_name: str):
 		"""
 		Gửi yêu cầu tạo phòng với 2 người chơi lên server.
@@ -256,40 +278,3 @@ class WebSocketClient:
 		except Exception as e:
 			logging.warning(f"Error requesting create room: {e}")
 			return None
-	
-	def handle_challenged_message(self):
-		"""
-		Luôn lắng nghe thông báo thách đấu từ server và phản hồi lại.
-		Nếu dữ liệu trả về không phải là list thì không làm gì cả.
-		"""
-		if not self.connection:
-			logging.warning("No active connection to handle challenge.")
-			return None
-		while True:
-			try:
-				message = self.connection.recv()
-				data = json.loads(message)
-				logging.info(f"Received challenge message: {data}")
-				if isinstance(data, list):
-					logging.info("Challenge message is not a list, ignore.")
-					continue
-				# Nếu là list, lấy phần tử đầu tiên
-				challenge_data = data[0]
-				if challenge_data.get("type") == "challenged":
-					challenger = challenge_data.get("challenger")
-					opponent = challenge_data.get("opponent")
-					logging.info(f"Bạn đã được {challenger} thách đấu! (Bạn là {opponent})")
-					# Tự động đồng ý thách đấu
-					response = {
-						"type": "challenge_response",
-						"opponent": opponent,
-						"challenger": challenger,
-						"accepted": True
-					}
-					self.send(json.dumps(response))
-					logging.info(f"Sent challenge response: {response}")
-				else:
-					logging.info(f"Received non-challenge message: {challenge_data}")
-			except Exception as e:
-				logging.warning(f"Error handling challenge message: {e}")
-				continue
