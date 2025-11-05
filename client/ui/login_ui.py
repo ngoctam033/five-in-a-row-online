@@ -5,8 +5,7 @@ import threading
 import json
 from ui.game_ui import ChessboardApp
 from network.client_network import WebSocketClient
-import logging
-logging.basicConfig(level=logging.INFO)
+from logger import logger
 
 class LoginUI:
     def __init__(self, root, ws_client: WebSocketClient,
@@ -119,7 +118,7 @@ class LoginUI:
             sended = self.ws_client.send_create_room(user_name, opponent_name)
             if self.on_login_callback:
                 self.on_login_callback(user_name, opponent_name, sended["current_turn"])
-            # logging.info(f"Create room request sent: {sended}")
+            # logger.info(f"Create room request sent: {sended}")
         else:
             self.message_label.config(text=f"❌ Không thể thách đấu với {opponent_name}.", foreground="red")
             self.selected_opponent = None

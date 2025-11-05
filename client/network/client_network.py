@@ -1,5 +1,5 @@
 import websocket
-import logging
+from logger import logger
 import json
 class WebSocketClient:
 	"""Quản lý kết nối, giao tiếp, trạng thái và luồng với server qua websocket"""
@@ -13,16 +13,16 @@ class WebSocketClient:
 
 	def _init_ws(self):
 		try:
-			logging.info(f"Connecting to server at {self.uri}...")
+			logger.info(f"Connecting to server at {self.uri}...")
 			self.connection = websocket.create_connection(self.uri)
 			if self.connection:
 				self.connected = True
-				logging.info("Connected to server.")
+				logger.info("Connected to server.")
 				sent_success = self.send("Hello from client!")
 				if sent_success:
-					logging.info("Initial hello message sent successfully.")
+					logger.info("Initial hello message sent successfully.")
 				else:
-					logging.warning("Failed to send initial hello message.")
+					logger.warning("Failed to send initial hello message.")
 			else:
 				print("Failed to connect to server: No connection object.")
 		except Exception as e:
@@ -34,13 +34,13 @@ class WebSocketClient:
 			try:
 				# await self.connection.send(message)
 				self.connection.send(message)
-				# logging.info(f"Sent message: {message}")
+				# logger.info(f"Sent message: {message}")
 				return True
 			except Exception as e:
-				logging.warning(f"Error sending message: {e}")
+				logger.warning(f"Error sending message: {e}")
 				return False
 		else:
-			logging.warning("No connection to send message.")
+			logger.warning("No connection to send message.")
 			return False
 
 	def receive_once(self, timeout=0.1):
@@ -53,16 +53,16 @@ class WebSocketClient:
 			try:
 				self.connection.settimeout(timeout)
 				response = self.connection.recv()
-				# logging.info(f"Received message: {response}")
+				# logger.info(f"Received message: {response}")
 				return response
 			except Exception as e:
-				# logging.warning(f"Error receiving message: {e}")
+				# logger.warning(f"Error receiving message: {e}")
 				return None
 			finally:
 				if oldtimeout is not None:
 					self.connection.settimeout(oldtimeout)
 		else:
-			logging.warning("No connection to receive message.")
+			logger.warning("No connection to receive message.")
 			return None
 	
 	def send_move(self, x, y, playername):
@@ -85,12 +85,12 @@ class WebSocketClient:
 			message = json.dumps(move_data)
 			sended = self.send(message)
 			if not sended:
-				logging.warning("Failed to send move data.")
+				logger.warning("Failed to send move data.")
 				return None
 			response = self.receive_once()
 			return json.loads(response)
 		else:
-			logging.warning("No connection to send move.")
+			logger.warning("No connection to send move.")
 			return None
 
 	def send_create_account(self, playername: str) -> bool:
@@ -109,11 +109,11 @@ class WebSocketClient:
 			}
 		"""
 		if not self.connection:
-			logging.warning("No active connection to send account creation request.")
+			logger.warning("No active connection to send account creation request.")
 			return False
 		
 		if not playername:
-			logging.warning("Player name is empty - cannot send account creation request.")
+			logger.warning("Player name is empty - cannot send account creation request.")
 			return False
 
 		account_data = {
@@ -128,16 +128,16 @@ class WebSocketClient:
 			if sent_success: 
 				response = self.receive_once()
 				if response:
-					logging.info(f"Server response after account creation: {response}")
+					logger.info(f"Server response after account creation: {response}")
 				else:
-					logging.warning("No response received from server after account creation request.")
-				logging.info(f"Account creation request sent: {account_data}")
+					logger.warning("No response received from server after account creation request.")
+				logger.info(f"Account creation request sent: {account_data}")
 				return True
 			else:
-				logging.warning("Failed to send account creation message.")
+				logger.warning("Failed to send account creation message.")
 				return False
 		except Exception as e:
-			logging.warning(f"Error sending account creation request: {e}")
+			logger.warning(f"Error sending account creation request: {e}")
 
 	def send_get_online_players(self, player_name: str):
 		"""
@@ -151,7 +151,7 @@ class WebSocketClient:
 		}
 		"""
 		if not self.connection:
-			logging.warning("No active connection to request online players.")
+			logger.warning("No active connection to request online players.")
 			return None
 
 		request_data = {
@@ -166,17 +166,17 @@ class WebSocketClient:
 			if sent_success:
 				response = self.receive_once()
 				if response:
-					logging.info(f"Received online players list: {response}")
+					logger.info(f"Received online players list: {response}")
 					players_list = json.loads(response)
 					return players_list
 				else:
-					logging.warning("No response received from server for online players request.")
+					logger.warning("No response received from server for online players request.")
 					return None
 			else:
-				logging.warning("Failed to send online players request.")
+				logger.warning("Failed to send online players request.")
 				return None
 		except Exception as e:
-			logging.warning(f"Error requesting online players: {e}")
+			logger.warning(f"Error requesting online players: {e}")
 			return None
 		
 	def send_check_challengeable(self, user_name: str, opponent_name: str) -> bool:
@@ -189,7 +189,7 @@ class WebSocketClient:
 			True nếu server xác nhận có thể thách đấu, False nếu không hoặc lỗi.
 		"""
 		if not self.connection:
-			logging.warning("No active connection to check challengeable.")
+			logger.warning("No active connection to check challengeable.")
 			return False
 
 		request_data = {
@@ -205,17 +205,17 @@ class WebSocketClient:
 			if sent_success:
 				response = self.receive_once()
 				if response:
-					logging.info(f"Received challengeable check response: {response}")
+					logger.info(f"Received challengeable check response: {response}")
 					result = json.loads(response)
 					return result
 				else:
-					logging.warning("No response received from server for challengeable check.")
+					logger.warning("No response received from server for challengeable check.")
 					return None
 			else:
-				logging.warning("Failed to send challengeable check request.")
+				logger.warning("Failed to send challengeable check request.")
 				return None
 		except Exception as e:
-			logging.warning(f"Error requesting challengeable check: {e}")
+			logger.warning(f"Error requesting challengeable check: {e}")
 			return None
 	
 	def receive_opponent_move(self):
@@ -225,7 +225,7 @@ class WebSocketClient:
 			dict: thông tin nước đi của đối thủ nếu nhận được, None nếu lỗi hoặc không có kết nối
 		"""
 		if not self.connection:
-			logging.warning("No connection to receive opponent move.")
+			logger.warning("No connection to receive opponent move.")
 			return None
 		try:
 			message = self.receive_once()
@@ -233,13 +233,13 @@ class WebSocketClient:
 				return None
 			data = json.loads(message)
 			if isinstance(data, dict) and data.get("type") == "opponent_move":
-				logging.info(f"Received opponent move: {data}")
+				logger.info(f"Received opponent move: {data}")
 				return data
 			else:
-				logging.info(f"Received non-opponent move message: {data}")
+				logger.info(f"Received non-opponent move message: {data}")
 				return None
 		except Exception as e:
-			logging.warning(f"Error receiving opponent move: {e}")
+			logger.warning(f"Error receiving opponent move: {e}")
 			return None
 	
 	def send_create_room(self, user_name: str, opponent_name: str):
@@ -252,7 +252,7 @@ class WebSocketClient:
 			Thông tin phòng từ server nếu thành công, None nếu lỗi hoặc không có kết nối
 		"""
 		if not self.connection:
-			logging.warning("No active connection to create room.")
+			logger.warning("No active connection to create room.")
 			return None
 
 		request_data = {
@@ -268,17 +268,17 @@ class WebSocketClient:
 			if sent_success:
 				response = self.receive_once()
 				if response:
-					logging.info(f"Received create room response: {response}")
+					logger.info(f"Received create room response: {response}")
 					room_info = json.loads(response)
 					return room_info
 				else:
-					logging.warning("No response received from server for create room request.")
+					logger.warning("No response received from server for create room request.")
 					return None
 			else:
-				logging.warning("Failed to send create room request.")
+				logger.warning("Failed to send create room request.")
 				return None
 		except Exception as e:
-			logging.warning(f"Error requesting create room: {e}")
+			logger.warning(f"Error requesting create room: {e}")
 			return None
 		
 
@@ -292,7 +292,7 @@ class WebSocketClient:
 			Phản hồi từ server nếu thành công, None nếu lỗi hoặc không có kết nối
 		"""
 		if not self.connection:
-			logging.warning("No active connection to send winner info.")
+			logger.warning("No active connection to send winner info.")
 			return None
 
 		request_data = {
@@ -307,15 +307,15 @@ class WebSocketClient:
 			if sent_success:
 				response = self.receive_once()
 				if response:
-					logging.info(f"Received winner info response: {response}")
+					logger.info(f"Received winner info response: {response}")
 					result = json.loads(response)
 					return result
 				else:
-					logging.warning("No response received from server for winner info request.")
+					logger.warning("No response received from server for winner info request.")
 					return None
 			else:
-				logging.warning("Failed to send winner info request.")
+				logger.warning("Failed to send winner info request.")
 				return None
 		except Exception as e:
-			logging.warning(f"Error requesting winner info: {e}")
+			logger.warning(f"Error requesting winner info: {e}")
 			return None
