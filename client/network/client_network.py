@@ -280,3 +280,42 @@ class WebSocketClient:
 		except Exception as e:
 			logging.warning(f"Error requesting create room: {e}")
 			return None
+		
+
+	def send_winner_info(self, winner_name: str):
+		"""
+		Gửi thông tin người chiến thắng lên server.
+		Args:
+			room_id (str): ID của phòng chơi
+			winner_name (str): tên người chiến thắng
+		Return:
+			Phản hồi từ server nếu thành công, None nếu lỗi hoặc không có kết nối
+		"""
+		if not self.connection:
+			logging.warning("No active connection to send winner info.")
+			return None
+
+		request_data = {
+			"type": "winner_info",
+			"winner": winner_name
+		}
+
+		try:
+			message = json.dumps(request_data)
+			sent_success = self.send(message)
+
+			if sent_success:
+				response = self.receive_once()
+				if response:
+					logging.info(f"Received winner info response: {response}")
+					result = json.loads(response)
+					return result
+				else:
+					logging.warning("No response received from server for winner info request.")
+					return None
+			else:
+				logging.warning("Failed to send winner info request.")
+				return None
+		except Exception as e:
+			logging.warning(f"Error requesting winner info: {e}")
+			return None
