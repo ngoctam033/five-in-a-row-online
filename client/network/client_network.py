@@ -43,16 +43,24 @@ class WebSocketClient:
 			logging.warning("No connection to send message.")
 			return False
 
-	def receive_once(self):
-		"""Nhận một tin nhắn từ server (dùng khi không có callback)"""
+	def receive_once(self, timeout=0.1):
+		"""
+		Nhận một tin nhắn từ server (dùng khi không có callback), không blocking lâu.
+		Nếu không có dữ liệu trong timeout giây thì trả về None.
+		"""
 		if self.connection:
+			oldtimeout = self.connection.gettimeout() if hasattr(self.connection, 'gettimeout') else None
 			try:
+				self.connection.settimeout(timeout)
 				response = self.connection.recv()
 				# logging.info(f"Received message: {response}")
 				return response
 			except Exception as e:
-				logging.warning(f"Error receiving message: {e}")
+				# logging.warning(f"Error receiving message: {e}")
 				return None
+			finally:
+				if oldtimeout is not None:
+					self.connection.settimeout(oldtimeout)
 		else:
 			logging.warning("No connection to receive message.")
 			return None
@@ -80,7 +88,7 @@ class WebSocketClient:
 				logging.warning("Failed to send move data.")
 				return None
 			response = self.receive_once()
-			return response
+			return json.loads(response)
 		else:
 			logging.warning("No connection to send move.")
 			return None
