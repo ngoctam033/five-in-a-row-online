@@ -38,6 +38,7 @@ class Board:
     """Quản lý trạng thái bàn cờ và logic liên quan"""
     def __init__(self, size=25):
         self.size = size
+        self.grid = [[0 for _ in range(self.size)] for _ in range(self.size)]
         logging.info(f"Board initialized with size {self.size}")
         self.reset()
 

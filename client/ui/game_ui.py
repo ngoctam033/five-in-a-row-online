@@ -11,6 +11,7 @@ from logic.board import BoardGameLogic
 # from player.aiplayer import AIPlayer
 import logging
 import tkinter as tk
+from tkinter import messagebox
 logging.basicConfig(level=logging.INFO)
 
 class ChessboardApp:
@@ -28,6 +29,8 @@ class ChessboardApp:
         self.canvas = tk.Canvas(root, width=1000, height=1000, bg="white")
         self.canvas.pack(fill=tk.BOTH, expand=True)
         self.renderer = BoardRenderer(self.canvas, self.board, pixel=40)
+        self.board_game_logic = BoardGameLogic()
+        self.is_ended = False
 
         self.player1 = Player(piece_id=1, username=username1)
         self.player2 = OnlinePlayer(piece_id=2, username=username2)
@@ -41,9 +44,9 @@ class ChessboardApp:
             self.current_turn = 1  # mặc định player1 đi trước
         self.ws_client = ws_client
 
-        if self.mode == "local":
-            from player.aiplayer import AIPlayer
-            self.player2 = AIPlayer(piece_id=2)
+        # if self.mode == "local":
+        #     from player.aiplayer import AIPlayer
+        #     self.player2 = AIPlayer(piece_id=2)
 
         self.canvas.bind("<Button-1>", self.on_canvas_click)
         self.renderer.draw_board()
@@ -52,7 +55,7 @@ class ChessboardApp:
 
     def listen_opponent_move(self):
         def check_move():
-            logging.info("Polling for opponent move...")
+            # logging.info("Polling for opponent move...")
             opponent_move = None
             if self.current_turn == 2:
                 opponent_move = self.ws_client.receive_opponent_move()
@@ -60,7 +63,15 @@ class ChessboardApp:
                 if opponent_move:
                     self.player2_move(opponent_move)
                     self.current_turn = 1
-            logging.info(f"Current turn after polling: Player {self.current_turn}.")
+            check_win = self.board_game_logic.is_win(self.board.grid)
+            if not self.is_ended:
+                if check_win == "O won":
+                    tk.messagebox.showinfo("Kết quả", "Bạn đã chiến thắng!")
+                    self.is_ended = True
+                elif check_win == "X won":
+                    tk.messagebox.showinfo("Kết quả", "Bạn đã thua!")
+                    self.is_ended = True
+            # logging.info(f"Current turn after polling: Player {self.current_turn}.")
             self.root.after(500, check_move)  # luôn gọi lại sau 500ms
         self.root.after(500, check_move)
 
@@ -72,21 +83,31 @@ class ChessboardApp:
         if self.current_turn == 1:
             make_move = self.player1.make_move(self.board, y, x)
             self.renderer.draw_board()
-            opponent_move = self.ws_client.send_move(x, y, playername=self.player1.username)  
+            opponent_move = self.ws_client.send_move(x, y, playername=self.player1.username)
             logging.info("Opponent move received: %s", opponent_move) 
             if opponent_move:
                 if opponent_move.get("type") == "error":
                     logging.error("Error from server: %s", opponent_move.get("message"))
                 else:
                     self.current_turn = 2
-                    # self.player2_move(opponent_move)
+            check_win = self.board_game_logic.is_win(self.board.grid)
+            if not self.is_ended:
+                if check_win == "O won":
+                    tk.messagebox.showinfo("Kết quả", "Bạn đã chiến thắng!")
+                    self.is_ended = True
+                elif check_win == "X won":
+                    tk.messagebox.showinfo("Kết quả", "Bạn đã thua!")
+                    self.is_ended = True
         else:
             logging.info("It's not Player 1's turn or invalid move at (%d, %d).", y, x)
-            # opponent_move = self.ws_client.receive_opponent_move()
-            # if opponent_move:
-                # self.current_turn = 2
-                # self.player2_move(opponent_move)
-        # board_game_logic = BoardGameLogic().check_win(self.board.grid)
+            check_win = self.board_game_logic.is_win(self.board.grid)
+            if not self.is_ended:
+                if check_win == "O won":
+                    tk.messagebox.showinfo("Kết quả", "Bạn đã chiến thắng!")
+                    self.is_ended = True
+                elif check_win == "X won":
+                    tk.messagebox.showinfo("Kết quả", "Bạn đã thua!")
+                    self.is_ended = True
         
 
     def player2_move(self, move):

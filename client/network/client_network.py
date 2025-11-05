@@ -229,6 +229,8 @@ class WebSocketClient:
 			return None
 		try:
 			message = self.receive_once()
+			if message is None:
+				return None
 			data = json.loads(message)
 			if isinstance(data, dict) and data.get("type") == "opponent_move":
 				logging.info(f"Received opponent move: {data}")
