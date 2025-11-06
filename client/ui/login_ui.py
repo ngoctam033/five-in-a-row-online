@@ -8,7 +8,7 @@ from network.client_network import WebSocketClient
 from logger import logger
 
 class LoginUI:
-    def __init__(self, root, ws_client: WebSocketClient,
+    def __init__(self, root: tk.Tk, ws_client: WebSocketClient,
                  on_login_callback):
         self.root = root
         self.ws_client = ws_client
@@ -60,6 +60,7 @@ class LoginUI:
             command=self.on_find_match_click
         )
         find_match_button.pack(pady=10, ipadx=15, ipady=5)
+        self.listen_challenge_request()
         # ======= Nút Play =======
         # play_button = ttk.Button(
         #     self.frame, 
@@ -67,6 +68,63 @@ class LoginUI:
         #     command=self.on_play_click
         # )
         # play_button.pack(pady=10, ipadx=15, ipady=5)
+
+    def listen_challenge_request(self):
+        """Lắng nghe thông tin thách đấu từ server (polling)."""
+        def check_challenge():
+            try:
+                challenge_info = self.ws_client.receive_challenge_request()
+                if challenge_info:
+                    opponent = challenge_info.get("from")
+                    logger.info(f"Received challenge request from '{opponent}'")
+                    # Hiển thị cửa sổ popup với 2 lựa chọn
+                    popup = tk.Toplevel(self.root)
+                    popup.title("Lời thách đấu mới")
+                    popup.geometry("350x180")
+                    popup.update()  # Cập nhật giao diện
+                    popup.grab_set()
+                    label = tk.Label(popup,
+                                     text=f"{opponent} đã gửi lời thách đấu!\nBạn có đồng ý không?",
+                                          font=("Arial", 13), wraplength=320)
+                    label.pack(pady=20)
+
+                    def send_response(accept):
+                        response = {
+                            "type": "challenge_response",
+                            "accept": accept,
+                            "from": self.name_entry.get().strip(),
+                            "to": opponent
+                        }
+                        logger.info(f"Sending challenge response: accept={accept}, from={response['from']}, to={opponent}")
+                        self.ws_client.send(json.dumps(response))
+                        self.ws_client.receive_once()
+                        popup.destroy()
+                        if accept:
+                            sended = self.ws_client.send_create_room(
+                                                                    self.name_entry.get().strip(),
+                                                                    opponent)
+                            logger.info(f"Room created after challenge accepted: {sended}")
+                            logger.info(f"Type of sended: {type(sended)}")
+                            if self._challenge_after_id is not None:
+                                self.root.after_cancel(self._challenge_after_id)
+                                logger.info("Stopped challenge polling after match accepted.")
+                                self._challenge_after_id = None
+                            if self.on_login_callback:
+                                self.on_login_callback(self.name_entry.get().strip(),
+                                                       opponent, sended["current_turn"])
+
+                    btn_frame = tk.Frame(popup)
+                    btn_frame.pack(pady=10)
+                    agree_btn = tk.Button(btn_frame, text="Đồng ý",
+                                          width=10, command=lambda: send_response(True))
+                    agree_btn.pack(side=tk.LEFT, padx=10)
+                    decline_btn = tk.Button(btn_frame, text="Không",
+                                            width=10, command=lambda: send_response(False))
+                    decline_btn.pack(side=tk.LEFT, padx=10)
+            except Exception as e:
+                logger.error(f"Error in challenge polling: {e}")
+            self._challenge_after_id = self.root.after(1000, check_challenge)
+        self._challenge_after_id = self.root.after(1000, check_challenge)
 
     def on_find_match_click(self):
         username = self.name_entry.get().strip()
@@ -111,14 +169,39 @@ class LoginUI:
     def check_and_start_challenge(self, opponent_name):
         user_name = self.name_entry.get().strip()
         challengeable = self.ws_client.send_check_challengeable(user_name, opponent_name)
-        print(f"Challengeable ({user_name} vs {opponent_name}): {challengeable}")
+        logger.info(f"Challengeable ({user_name} vs {opponent_name}): {challengeable}")
         if challengeable:
             self.selected_opponent = opponent_name
-
-            sended = self.ws_client.send_create_room(user_name, opponent_name)
-            if self.on_login_callback:
-                self.on_login_callback(user_name, opponent_name, sended["current_turn"])
-            # logger.info(f"Create room request sent: {sended}")
+            # Thông báo đang chờ đối thủ chấp nhận thách đấu
+            self.message_label.config(
+                text=f"⏳ Đã gửi lời thách đấu tới {opponent_name}. Đang chờ đối thủ chấp nhận...",
+                foreground="blue"
+            )
+            # Gọi hàm chờ phản hồi thách đấu từ server
+            is_accept = self.ws_client.wait_for_challenge_response(user_name, opponent_name)
+            if is_accept:
+                self.message_label.config(
+                    text=f"✅ {opponent_name} đã chấp nhận thách đấu! Đang vào phòng...",
+                    foreground="green"
+                )
+                if self._challenge_after_id is not None:
+                    self.root.after_cancel(self._challenge_after_id)
+                    logger.info("Stopped challenge polling after match accepted.")
+                    self._challenge_after_id = None            
+                if self.on_login_callback:
+                    # Gọi lại send_create_room để lấy thông tin phòng mới nhất
+                    sended = self.ws_client.send_create_room(user_name, opponent_name)
+                    logger.info(f"Create room after challenge accepted: {sended}")
+                    if self._challenge_after_id is not None:
+                        self.root.after_cancel(self._challenge_after_id)
+                        logger.info("Stopped challenge polling after match accepted.")
+                        self._challenge_after_id = None
+                    self.on_login_callback(user_name, opponent_name, sended["current_turn"])
+            else:
+                self.message_label.config(
+                    text=f"❌ {opponent_name} đã từ chối thách đấu.",
+                    foreground="red"
+                )
         else:
             self.message_label.config(text=f"❌ Không thể thách đấu với {opponent_name}.", foreground="red")
             self.selected_opponent = None

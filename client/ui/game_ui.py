@@ -60,11 +60,11 @@ class ChessboardApp:
 
     def listen_opponent_move(self):
         def check_move():
-            # logger.info("Polling for opponent move...")
+            logger.info("Polling for opponent move...")
             opponent_move = None
             if self.current_turn == 2:
                 opponent_move = self.ws_client.receive_opponent_move()
-                # logger.info("Checking for opponent move: %s", opponent_move)
+                logger.info("Checking for opponent move: %s", opponent_move)
                 if opponent_move:
                     self.player2_move(opponent_move)
                     self.current_turn = 1
@@ -81,46 +81,53 @@ class ChessboardApp:
                     minutes = elapsed // 60
                     seconds = elapsed % 60
                     tk.messagebox.showinfo("Thời gian trận đấu", f"Thời lượng: {minutes} phút {seconds} giây")
-            # logger.info(f"Current turn after polling: Player {self.current_turn}.")
+            logger.info(f"Current turn after polling: Player {self.current_turn}.")
             self.root.after(500, check_move)  # luôn gọi lại sau 500ms
-        self.root.after(500, check_move)
+        if not self.is_ended:
+            self.root.after(500, check_move)
 
     def on_canvas_click(self, event):
         x = event.x // self.renderer.pixel
         y = event.y // self.renderer.pixel
-        # logger.info("Canvas clicked at pixel (%d, %d), board position (%d, %d).", event.x, event.y, y, x)
+        logger.info("Canvas clicked at pixel (%d, %d), board position (%d, %d).", event.x, event.y, y, x)
         logger.info("Current turn: Player %d.", self.current_turn)
         if self.current_turn == 1:
             make_move = self.player1.make_move(self.board, y, x)
             self.renderer.draw_board()
+            # Log nước đi của người chơi
+            # logger.info(f"Player 1 ({self.player1.username}) move: (row={y}, col={x})")
             opponent_move = self.ws_client.send_move(x, y, playername=self.player1.username)
             logger.info("Opponent move received: %s", opponent_move) 
             if opponent_move:
                 if opponent_move.get("type") == "error":
-                    logger.error("Error from server: %s", opponent_move.get("message"))
+                    logger.error(f"Error from server: {opponent_move.get('message')}")
                 else:
                     self.current_turn = 2
             check_win = self.board_game_logic.is_win(self.board.grid)
             if not self.is_ended:
                 if check_win == "O won":
+                    logger.info("Player 1 wins.")
                     tk.messagebox.showinfo("Kết quả", "Bạn đã chiến thắng!")
                     self.is_ended = True
                 elif check_win == "X won":
+                    logger.info("Player 2 wins.")
                     tk.messagebox.showinfo("Kết quả", "Bạn đã thua!")
                     self.is_ended = True
                 if self.is_ended:
                     elapsed = int(time.time() - self.start_time)
                     minutes = elapsed // 60
                     seconds = elapsed % 60
+                    logger.info(f"Game ended. Total time: {minutes} phút {seconds} giây")
                     tk.messagebox.showinfo("Thời gian trận đấu", f"Thời lượng: {minutes} phút {seconds} giây")
         else:
-            logger.info("It's not Player 1's turn or invalid move at (%d, %d).", y, x)
             check_win = self.board_game_logic.is_win(self.board.grid)
             if not self.is_ended:
                 if check_win == "O won":
+                    logger.info("Player 1 wins.")
                     tk.messagebox.showinfo("Kết quả", "Bạn đã chiến thắng!")
                     self.is_ended = True
                 elif check_win == "X won":
+                    logger.info("Player 2 wins.")
                     tk.messagebox.showinfo("Kết quả", "Bạn đã thua!")
                     self.is_ended = True
         
@@ -129,12 +136,12 @@ class ChessboardApp:
         if self.current_turn == 2:
             if isinstance(move, str):
                 move = json.loads(move)
-            logger.info(f"Player 2: {self.player2.username} turn.")
+            # logger.info(f"Player 2: {self.player2.username} turn.")
             x = move["x"]
             y = move["y"]
             move = self.player2.make_move(self.board, y, x)
             if move:
-                logger.info("Player 2 made a move at (%d, %d).", x, y)
+                # logger.info("Player 2 made a move at (%d, %d).", x, y)
                 self.current_turn = 1
                 self.renderer.draw_board()
                 logger.info("Turn changed to Player 1.")

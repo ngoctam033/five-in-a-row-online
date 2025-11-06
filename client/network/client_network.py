@@ -1,6 +1,7 @@
 import websocket
 from logger import logger
 import json
+import time
 class WebSocketClient:
 	"""Quản lý kết nối, giao tiếp, trạng thái và luồng với server qua websocket"""
 	def __init__(self, uri, on_message=None):
@@ -29,15 +30,18 @@ class WebSocketClient:
 			print(f"Failed to connect to server: {e}")
 			
 	def send(self, message):
-		"""Gửi message từ client đến server, trả về True nếu gửi thành công, False nếu lỗi hoặc không có kết nối"""
+		"""
+		Gửi message từ client đến server,
+		trả về True nếu gửi thành công,
+		False nếu lỗi hoặc không có kết nối
+		"""
 		if self.connection:
 			try:
-				# await self.connection.send(message)
 				self.connection.send(message)
-				# logger.info(f"Sent message: {message}")
+				logger.info(f"Sent message: {message}")
 				return True
 			except Exception as e:
-				logger.warning(f"Error sending message: {e}")
+				# logger.warning(f"Error sending message: {e}")
 				return False
 		else:
 			logger.warning("No connection to send message.")
@@ -207,6 +211,7 @@ class WebSocketClient:
 				if response:
 					logger.info(f"Received challengeable check response: {response}")
 					result = json.loads(response)
+					# True/False
 					return result
 				else:
 					logger.warning("No response received from server for challengeable check.")
@@ -319,3 +324,46 @@ class WebSocketClient:
 		except Exception as e:
 			logger.warning(f"Error requesting winner info: {e}")
 			return None
+		
+	def receive_challenge_request(self):
+		"""
+		Nhận message về lời thách đấu từ server.
+		Return:
+			dict: thông tin thách đấu nếu nhận được, None nếu lỗi hoặc không có kết nối
+		"""
+		if not self.connection:
+			logger.warning("No connection to receive challenge request.")
+			return None
+		try:
+			message = self.receive_once()
+			if message is None:
+				return None
+			data = json.loads(message)
+			if isinstance(data, dict) and data.get("type") == "challenge_request":
+				logger.info(f"Received challenge request: {data}")
+				return data
+			else:
+				logger.info(f"Received non-challenge request message: {data}")
+				return None
+		except Exception as e:
+			logger.warning(f"Error receiving challenge request: {e}")
+			return None
+		
+	def wait_for_challenge_response(self, user_name, opponent_name, timeout=30):
+		"""
+		Chờ phản hồi thách đấu từ server trong tối đa timeout giây.
+		Nếu đối thủ đồng ý, trả về True, nếu từ chối hoặc hết thời gian trả về False.
+		"""
+		start_time = time.time()
+		while time.time() - start_time <= timeout:
+			response = self.receive_once(timeout=0.5)
+			if response:
+				try:
+					data = json.loads(response)
+					if data.get("type") == "challenge_response":
+						return bool(data.get("accept", False))
+				except Exception as e:
+					logger.warning(f"Error parsing challenge response: {e}")
+			time.sleep(0.1)  # tránh busy loop
+		logger.info("Challenge response timed out.")
+		return False

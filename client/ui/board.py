@@ -11,21 +11,21 @@ class BoardRenderer:
 
     def draw_board(self):
         self.canvas.delete("all")
-        # logger.info("Drawing board...")
+        logger.info("Drawing board...")
         for i in range(self.board.size):
             for j in range(self.board.size):
                 x, y = i * self.pixel, j * self.pixel
                 self.canvas.create_rectangle(x, y, x + self.pixel, y + self.pixel, outline="black", width=1)
                 piece = self.board.get(j, i)
                 if piece == 1:
-                    # logger.info(f"Draw circle at ({j}, {i})")
+                    logger.info(f"Draw circle at ({j}, {i})")
                     self.draw_circle(x + self.pixel // 2, y + self.pixel // 2, 18, "blue")
                 elif piece == 2:
-                    # logger.info(f"Draw cross at ({j}, {i})")
+                    logger.info(f"Draw cross at ({j}, {i})")
                     self.draw_cross(x + self.pixel // 2, y + self.pixel // 2, 18, "red")
 
     def draw_circle(self, x, y, size, color):
-        # logger.info(f"Drawing circle at pixel ({x}, {y}), size {size}, color {color}")
+        logger.info(f"Drawing circle at pixel ({x}, {y}), size {size}, color {color}")
         self.canvas.create_oval(x - size, y - size, x + size, y + size, outline="black", fill=color, width=3)
 
     def draw_cross(self, x, y, size, color):
@@ -51,13 +51,13 @@ class Board:
 
     def is_in(self, y, x):
         in_board = 0 <= y < self.size and 0 <= x < self.size
-        # logger.info(f"Check is_in({y}, {x}): {in_board}")
+        logger.info(f"Check is_in({y}, {x}): {in_board}")
         return in_board
 
     def get(self, y, x):
         if self.is_in(y, x):
             value = self.grid[y][x]
-            # logger.info(f"Get cell ({y}, {x}): {value}")
+            logger.info(f"Get cell ({y}, {x}): {value}")
             return value
         else:
             logger.info(f"Get cell ({y}, {x}): out of bounds")
@@ -66,7 +66,7 @@ class Board:
     def set(self, y, x, value):
         if self.is_in(y, x):
             self.grid[y][x] = value
-            # logger.info(f"Set cell ({y}, {x}) to {value}")
+            logger.info(f"Set cell ({y}, {x}) to {value}")
         else:
             logger.info(f"Set cell ({y}, {x}) failed: out of bounds")
 

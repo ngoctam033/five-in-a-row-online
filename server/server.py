@@ -18,29 +18,29 @@ class WebSocketServer:
 		logger.info(f"Client connected: {websocket.remote_address}")
 		try:
 			async for message in websocket:
-				# logger.info(f"Received: {message}")
+				logger.info(f"Received: {message}")
 				try:
 					data = json.loads(message)
 					response = "This is a response for move message"
-					# logger.info(f"Parsed JSON data: {data}")
+					logger.info(f"Parsed JSON data: {data}")
 					if data.get("type") == "create_account":
 						response = self.create_player(websocket, player_name=data.get("player"))
 					if data.get("type") == "create_room":
-						# logger.info("Creating room with players: %s vs %s", data.get("player"), data.get("opponent"))
 						response = self.create_room_with_players(player1_name=data.get("player"), player2_name=data.get("opponent"))
-						# logger.info(f"Room creation response: {response}")
 					if data.get("type") == "get_online_players":
 						response = self.get_online_players(user_name=data.get("player"))
-						# logger.info(f"Online players for {data.get('player')}: {response}")
 					if data.get("type") == "move":
 						response = await self.get_opponent_move(data)
+					if data.get("type") == "challenge_response":
+						response = await self.handle_challenge_response(data)
 					if data.get("type") == "check_challengeable":
 						response = await self.check_challengeable(user_name=data.get("player"), opponent_name=data.get("opponent"))
+					logger.info(f"Response from server to client {websocket.remote_address}: {response}")
 					await websocket.send(json.dumps(response))
 				except json.JSONDecodeError:
 					logger.warning("Received non-JSON message: %s", message)
 		except websockets.ConnectionClosed:
-			logger.info("Client disconnected")
+			logger.info(f"Client disconnected: {websocket.remote_address}")
 			self.players = [p for p in self.players if p.websocket != websocket]
 			await websocket.close()  # Đảm bảo đóng kết nối phía server
 	
@@ -116,7 +116,7 @@ class WebSocketServer:
 		# Gửi nước đi cho đối thủ
 		try:
 			await opponent.websocket.send(json.dumps(opponent_move_data))
-			# logger.info(f"Sent opponent move to {opponent.name}: {opponent_move_data}")
+			logger.info(f"Sent opponent move to {opponent.name}: {opponent_move_data}")
 			logger.info(f"Đã chuyển tiếp nước đi từ {player_name} đến {opponent.name}.")
 			# Đổi lượt current player trong room
 			room.current_turn = 2 if room.current_turn == 1 else 1
@@ -128,7 +128,7 @@ class WebSocketServer:
 		except Exception as e:
 			logger.error(f"Lỗi không xác định khi gửi nước đi: {e}")
 			return {"type": "error", "message": "Lỗi máy chủ khi xử lý nước đi."}
-	def check_challengeable(self, user_name, opponent_name):
+	async def check_challengeable(self, user_name, opponent_name):
 		"""
 		Kiểm tra xem hai user có thể ghép cặp thách đấu với nhau không.
 		Nếu có thể, gửi thông điệp thách đấu đến opponent và chờ phản hồi (Yes/No).
@@ -139,6 +139,7 @@ class WebSocketServer:
 		opponent = next((p for p in self.players if p.name == opponent_name), None)
 		logger.info(f"Checking challengeable: user={user}, opponent={opponent}")
 		if not user or not opponent:
+			logger.warning(f"One or both players not found for challengeable check (user: {user_name}, opponent: {opponent_name})")
 			return False
 		room_user = self.find_room_by_playername(user_name)
 		room_opponent = self.find_room_by_playername(opponent_name)
@@ -147,9 +148,23 @@ class WebSocketServer:
 			return True
 		# Nếu opponent đã ở phòng khác thì không thể thách đấu
 		if room_opponent is not None:
+			logger.warning(f"Opponent {opponent_name} is already in a room.")
 			return False
 		# Nếu cả hai chưa ở phòng nào thì có thể thách đấu
-		return True
+		# Gửi thông điệp thách đấu cho opponent và chờ phản hồi
+		if opponent.websocket:
+			challenge_msg = {
+				"type": "challenge_request",
+				"from": user_name
+			}
+			try:
+				await opponent.websocket.send(json.dumps(challenge_msg))
+				logger.info(f"Sent challenge_request from {user_name} to {opponent_name}")
+				return True
+			except Exception as e:
+				logger.warning(f"Failed to send challenge_request to {opponent_name}: {e}")
+				return False
+		return False
 		
 	def find_room_by_playername(self, playername):
 		"""
@@ -207,6 +222,40 @@ class WebSocketServer:
 			"player2": player2.name,
 			"current_turn": room.current_player()
 		}
+	async def handle_challenge_response(self, data):
+		"""
+		Xử lý phản hồi thách đấu từ client (accept/decline), gửi kết quả về cho người thách đấu.
+		Args:
+			data: dict chứa thông tin phản hồi, ví dụ:
+				{
+					"type": "challenge_response",
+					"accept": True/False,
+					"from": <người nhận thách đấu>,
+					"to": <người gửi thách đấu>
+				}
+			websocket: websocket của người gửi phản hồi
+		"""
+		accept = data.get("accept", False)
+		from_player = data.get("from")  # người nhận thách đấu (người vừa bấm accept/decline)
+		to_player = data.get("to")      # người gửi thách đấu (người chờ phản hồi)
+		# Tìm player gửi thách đấu
+		challenger = next((p for p in self.players if p.name == to_player), None)
+		if not challenger or not challenger.websocket:
+			logger.warning(f"Cannot find challenger {to_player} to send challenge response.")
+			return {"type": "error", "message": "Không tìm thấy người thách đấu."}
+		# Chuẩn bị dữ liệu gửi về cho challenger
+		response_msg = {
+			"type": "challenge_response",
+			"accept": accept,
+			"from": from_player
+		} 
+		try:
+			await challenger.websocket.send(json.dumps(response_msg))
+			logger.info(f"Sent challenge_response from {from_player} to {to_player}: accept={accept}")
+			return {"type": "challenge_response_sent", "accept": accept}
+		except Exception as e:
+			logger.warning(f"Failed to send challenge_response to {to_player}: {e}")
+			return {"type": "error", "message": "Không gửi được phản hồi thách đấu."}
 	# def notify_opponent_challenged(self, opponent_name, challenger_name):
 	# 	"""
 	# 	Gửi thông báo cho player2 (opponent) rằng đã có đối thủ thách đấu và chờ phản hồi.
@@ -226,22 +275,22 @@ class WebSocketServer:
 	# 		}
 	# 		try:
 	# 			opponent.websocket.send(json.dumps(message))
-	# 			logger.info(f"Sent challenge notification to {opponent_name}")
+	# 			# logger.info(f"Sent challenge notification to {opponent_name}")
 	# 			# Chờ phản hồi từ opponent (timeout 30s)
 	# 			try:
 	# 				response = asyncio.wait_for(opponent.websocket.recv(), timeout=30)
-	# 				logger.info(f"Received challenge response from {opponent_name}: {response}")
+	# 				# logger.info(f"Received challenge response from {opponent_name}: {response}")
 	# 				response_data = json.loads(response)
 	# 				if response_data.get("type") == "challenge_response":
 	# 					return response_data
 	# 				else:
-	# 					logger.warning(f"Unexpected response type from {opponent_name}: {response_data}")
+	# 					# logger.warning(f"Unexpected response type from {opponent_name}: {response_data}")
 	# 					return None
 	# 			except asyncio.TimeoutError:
-	# 				logger.warning(f"Timeout waiting for challenge response from {opponent_name}")
+	# 				# logger.warning(f"Timeout waiting for challenge response from {opponent_name}")
 	# 				return None
 	# 		except Exception as e:
-	# 			logger.warning(f"Failed to notify opponent {opponent_name}: {e}")
+	# 			# logger.warning(f"Failed to notify opponent {opponent_name}: {e}")
 	# 			return None
 	# 	return None
 	async def start(self):
