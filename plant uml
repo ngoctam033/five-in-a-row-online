@@ -1,0 +1,77 @@
+@startuml
+title Sequence Diagram: Five-in-a-Row
+
+actor PlayerA as A
+actor PlayerB as B
+participant "WebSocketServer" as Server
+participant "GameManager" as GM
+participant "Room" as Room
+
+== 1. Đăng nhập & lấy danh sách online ==
+A -> Server: LOGIN {username: "PlayerA"}
+Server -> GM: register_player("PlayerA")
+GM --> Server: player_id_A
+Server -> A: LOGIN_OK {player_id: A}
+
+A -> Server: GET_ONLINE_PLAYERS
+Server -> GM: get_online_players()
+GM --> Server: [Danh sách người chơi hiện có]
+Server -> A: ONLINE_PLAYERS_LIST
+
+== 2. Gửi lời thách đấu ==
+A -> Server: CHALLENGE_REQUEST {target_id: B}
+Server -> B: CHALLENGE_INVITE {from: A}
+
+alt B đồng ý
+  B -> Server: CHALLENGE_ACCEPT
+  Server -> GM: create_room(A, B)
+  GM -> Room: init_room(15x15)
+  Room --> GM: room_id
+  GM --> Server: room_created(room_id)
+  Server -> A: GAME_START {room_id, starting_player: A}
+  Server -> B: GAME_START {room_id, starting_player: A}
+else B từ chối
+  B -> Server: CHALLENGE_DECLINE
+  Server -> A: CHALLENGE_DECLINED
+end
+
+== 3. Quá trình chơi ==
+loop Trong khi chưa có người thắng
+  A -> Server: SEND MOVE {room_id, r, c, player_id: A}
+  activate Server
+  Server -> GM: validate_move(room_id, A, r, c)
+  activate GM
+  GM -> Room: apply_move(A, r, c)
+  activate Room
+  Room --> GM: move_result(success, next_player)
+  deactivate Room
+  GM -> Server: validation_result(success)
+  deactivate GM
+
+  alt move success
+    Server -> A: BROADCAST MOVE_APPLIED {r,c,player_piece,next_player}
+    Server -> B: BROADCAST MOVE_APPLIED {r,c,player_piece,next_player}
+    Server -> GM: check_win(room_id, r, c)
+    GM --> Server: has_winner?(true/false)
+    alt Có người thắng
+      Server -> A: BROADCAST GAME_END {winner: A, result: "Thắng"}
+      Server -> B: BROADCAST GAME_END {winner: A, result: "Thua"}
+      break
+    else Hết bàn mà không ai thắng
+      Server -> A: BROADCAST GAME_END {winner: None, result: "Hòa"}
+      Server -> B: BROADCAST GAME_END {winner: None, result: "Hòa"}
+      break
+    end
+  else move invalid
+    Server -> A: SEND INVALID_MOVE
+  end
+  deactivate Server
+end
+
+== 4. Trả kết quả và quay lại sảnh ==
+Server -> GM: update_player_status(A, "online")
+Server -> GM: update_player_status(B, "online")
+Server -> A: RETURN_TO_LOBBY
+Server -> B: RETURN_TO_LOBBY
+
+@enduml
