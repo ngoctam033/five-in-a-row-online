@@ -1,0 +1,51 @@
+@startuml
+title Flowchart: Five-in-a-Row
+
+start
+:Khởi tạo hệ thống Server và kết nối WebSocket;
+:Người chơi đăng nhập hệ thống;
+:Server cập nhật danh sách người chơi online;
+:Client gửi yêu cầu GET_ONLINE_PLAYERS;
+:Server trả về danh sách người chơi đang online;
+:Hiển thị danh sách người chơi online;
+
+if (Người chơi muốn thách đấu ai đó?) then (Có)
+  :Client gửi CHALLENGE_REQUEST tới Server;
+  :Server chuyển lời mời đến người chơi được chọn;
+  :Người được mời nhận thông báo "Bạn có lời mời thách đấu";
+  if (Người được mời đồng ý?) then (Đồng ý)
+    :Server tạo phòng đấu mới;
+    :Cả hai người chơi được gán vào cùng một Room;
+    :Gửi GAME_START tới cả hai;
+    :Khởi tạo bàn cờ (10x10) và trạng thái;
+    fork
+      :Người chơi 1 đến lượt;
+    fork again
+      :Người chơi 2 chờ;
+    end fork
+
+    while (game_not_over)
+      :Chờ sự kiện MOVE từ người chơi hiện tại;
+      :Kiểm tra tính hợp lệ của nước đi;
+      if (Nước đi hợp lệ?) then (Không)
+        :Gửi INVALID_MOVE cho client;
+      else (Có)
+        :Cập nhật bàn cờ và broadcast MOVE_APPLIED;
+        if (Có người thắng?) then (Có)
+          :Broadcast GAME_END với người thắng;
+          break
+        endif
+        :Chuyển lượt cho người chơi kế tiếp;
+      endif
+    endwhile
+
+    :Trò chơi kết thúc; Cập nhật kết quả;
+  else (Từ chối)
+    :Server gửi thông báo CHALLENGE_DECLINED tới người gửi;
+  endif
+else (Không)
+  :Người chơi chỉ xem danh sách online;
+endif
+
+stop
+@enduml
