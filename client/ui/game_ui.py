@@ -7,12 +7,10 @@ import json
 from network.client_network import WebSocketClient
 from logic.board import BoardGameLogic
 import time
-
-
-# from player.aiplayer import AIPlayer
 from logger import logger
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import ttk, font 
 
 class ChessboardApp:
     """Quản lý giao diện và luồng chính của ứng dụng"""
@@ -23,12 +21,42 @@ class ChessboardApp:
                  current_turn: str = "1"):
         self.root = root
         self.root.title("Five in a Row")
-        self.root.geometry("1000x1000")
 
+        self.font_title = font.Font(family="Segoe UI", size=16, weight="bold")
+        self.font_body = font.Font(family="Segoe UI", size=11)
+        self.font_timer = font.Font(family="Courier New", size=8, weight="bold")
+        #cấu hình cửa sổ
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1) # bàn cờ
+        self.root.grid_columnconfigure(1, weight=1) # thông tin 
+        #tính toán tạo bàn cờ 
         self.board = Board(size=10)
-        self.canvas = tk.Canvas(root, width=1000, height=1000, bg="white")
-        self.canvas.pack(fill=tk.BOTH, expand=True)
-        self.renderer = BoardRenderer(self.canvas, self.board, pixel=40)
+        pixel_per_cell = 40 # Kích thước mỗi ô
+        board_pixel_size = self.board.size * pixel_per_cell
+        self.canvas = tk.Canvas(self.root, width=board_pixel_size, height=board_pixel_size, bg="white", borderwidth=0, highlightthickness=0)
+        self.canvas.grid(row=0, column=0, padx=20, pady=20, sticky="nswe")
+
+        self.info_frame = ttk.Frame(self.root, padding="20") #khung chứa toàn bộ thông tin
+        self.info_frame.grid(row=0, column=1, padx=10, pady=20, sticky="nswe")
+
+        # chứa tên player 1 và 2
+        self.player1_label = ttk.Label(self.info_frame, text=f"Bạn (O): {username1}", font=self.font_body, foreground="blue")
+        self.player1_label.pack(anchor="w", pady=2)
+        
+        self.player2_label = ttk.Label(self.info_frame, text=f"Đối thủ (X): {username2}", font=self.font_body, foreground="red")
+        self.player2_label.pack(anchor="w", pady=2)
+
+        # Trạng thái lượt đi (Sẽ cập nhật ở Bước 2)
+        self.turn_label = ttk.Label(self.info_frame, text="Đang tải...", font=self.font_body, foreground="grey")
+        self.turn_label.pack(anchor="w", pady=(20, 0))
+        ttk.Separator(self.info_frame, orient='horizontal').pack(fill='x', pady=15)
+        #Tạo đồng hồ
+        ttk.Label(self.info_frame, text="THỜI GIAN", font=self.font_body).pack(anchor="w", pady=(10, 0))
+        self.start_time = time.time()
+        self.elapsed_label = ttk.Label(self.info_frame, text="00:00", font=self.font_timer, foreground="#333")
+        self.elapsed_label.pack(anchor="w", pady=5)
+
+        self.renderer = BoardRenderer(self.canvas, self.board, pixel=pixel_per_cell)
         self.board_game_logic = BoardGameLogic()
         self.is_ended = False
 
@@ -44,6 +72,7 @@ class ChessboardApp:
             self.current_turn = 1  # mặc định player1 đi trước
         self.ws_client = ws_client
 
+        
         # if self.mode == "local":
         #     from player.aiplayer import AIPlayer
         #     self.player2 = AIPlayer(piece_id=2)
@@ -52,11 +81,12 @@ class ChessboardApp:
         self.renderer.draw_board()
         logger.info("ChessboardApp initialized in %s mode.", self.mode)
         # --- Thời gian ván đấu ---
-        self.start_time = time.time()
-        self.elapsed_label = tk.Label(root, text="Thời gian: 00:00", font=("Arial", 14), fg="blue")
-        self.elapsed_label.place(x=850, y=60)
+        # self.start_time = time.time()
+        # self.elapsed_label = tk.Label(root, text="Thời gian: 00:00", font=("Arial", 14), fg="blue")
+        # self.elapsed_label.place(x=850, y=60)
         self.update_elapsed_time()
         self.listen_opponent_move()
+        self.elapsed_label.pack(pady=10)
 
     def listen_opponent_move(self):
         def check_move():
@@ -151,19 +181,19 @@ class ChessboardApp:
     def update_elapsed_time(self):
         """Hiển thị thời gian suy nghĩ của đối thủ (player2). Đếm khi current_turn==2, reset khi current_turn==1."""
         if not self.is_ended:
-            if not hasattr(self, '_opponent_think_start'):
-                self._opponent_think_start = None
+            if not hasattr(self, '_turn_start_time'):
+                self._turn_start_time = None
             if self.current_turn == 2:
                 # Nếu vừa chuyển sang lượt đối thủ thì bắt đầu đếm lại
-                if self._opponent_think_start is None:
-                    self._opponent_think_start = time.time()
-                elapsed = int(time.time() - self._opponent_think_start)
+                if self._turn_start_time is None:
+                    self._turn_start_time = time.time()
+                elapsed = int(time.time() - self._turn_start_time)
                 minutes = elapsed // 60
                 seconds = elapsed % 60
-                self.elapsed_label.config(text=f"Thời gian: {minutes:02d}:{seconds:02d}")
+                self.elapsed_label.config(text=f"{minutes:02d}:{seconds:02d}")
             else:
                 # Nếu vừa chuyển sang lượt mình thì reset label và timer
-                if self._opponent_think_start is not None:
-                    self.elapsed_label.config(text="Thời gian: 00:00")
-                    self._opponent_think_start = None
+                if self._turn_start_time is not None:
+                    self.elapsed_label.config(text="00:00")
+                    self._turn_start_time = None
         self.root.after(1000, self.update_elapsed_time)
