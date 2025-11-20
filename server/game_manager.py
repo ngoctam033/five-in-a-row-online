@@ -1,6 +1,6 @@
 class GameManager:
 	"""Quản lý trạng thái và logic của ván cờ"""
-	def __init__(self, board_size=15, player1 = None, player2 = None):
+	def __init__(self, board_size=10, player1 = None, player2 = None):
 		self.board_size = board_size
 		self.board = [[0 for _ in range(board_size)] for _ in range(board_size)]
 		self.current_player = 1
